@@ -1,0 +1,151 @@
+import { Questionnaire, User } from "@/lib/types";
+
+export const questionnaires: Questionnaire[] = [
+  {
+    id: "q1",
+    title: "Fitness Goal Assessment",
+    description: "Questionnaire to assess fitness goals and preferences",
+    status: "published",
+    createdAt: "2023-09-15T10:00:00Z",
+    updatedAt: "2023-09-20T14:30:00Z",
+    questions: [
+      {
+        id: "q1-1",
+        text: "What is your primary fitness goal?",
+        type: "multipleChoice",
+        required: true,
+        order: 1,
+        options: [
+          { id: "opt1", value: "weight_loss", label: "Weight Loss" },
+          { id: "opt2", value: "muscle_gain", label: "Muscle Gain" },
+          { id: "opt3", value: "endurance", label: "Improve Endurance" },
+          { id: "opt4", value: "flexibility", label: "Increase Flexibility" },
+          { id: "opt5", value: "general", label: "General Fitness" },
+        ],
+      },
+      {
+        id: "q1-2",
+        text: "How many times per week do you plan to exercise?",
+        type: "number",
+        required: true,
+        order: 2,
+      },
+      {
+        id: "q1-3",
+        text: "Do you have any injuries or medical conditions we should be aware of?",
+        type: "text",
+        required: true,
+        order: 3,
+        description: "This helps us customize your program safely",
+      },
+      {
+        id: "q1-4",
+        text: "Do you prefer working out at home or at a gym?",
+        type: "multipleChoice",
+        required: true,
+        order: 4,
+        options: [
+          { id: "opt1", value: "home", label: "Home" },
+          { id: "opt2", value: "gym", label: "Gym" },
+          { id: "opt3", value: "both", label: "Both" },
+          { id: "opt4", value: "outdoors", label: "Outdoors" },
+        ],
+      },
+      {
+        id: "q1-5",
+        text: "How would you rate your current fitness level?",
+        type: "scale",
+        required: true,
+        order: 5,
+        description: "1 = Beginner, 5 = Advanced",
+      },
+    ],
+  },
+  {
+    id: "q2",
+    title: "Nutrition Assessment",
+    description: "Questionnaire to understand dietary preferences and habits",
+    status: "draft",
+    createdAt: "2023-10-05T09:15:00Z",
+    updatedAt: "2023-10-10T11:20:00Z",
+    questions: [
+      {
+        id: "q2-1",
+        text: "Do you follow any specific diet?",
+        type: "multipleChoice",
+        required: true,
+        order: 1,
+        options: [
+          { id: "opt1", value: "none", label: "No specific diet" },
+          { id: "opt2", value: "vegetarian", label: "Vegetarian" },
+          { id: "opt3", value: "vegan", label: "Vegan" },
+          { id: "opt4", value: "keto", label: "Keto" },
+          { id: "opt5", value: "paleo", label: "Paleo" },
+          { id: "opt6", value: "other", label: "Other" },
+        ],
+      },
+      {
+        id: "q2-2",
+        text: "How many meals do you typically eat per day?",
+        type: "number",
+        required: true,
+        order: 2,
+      },
+      {
+        id: "q2-3",
+        text: "Are there any foods you're allergic to or cannot eat?",
+        type: "text",
+        required: true,
+        order: 3,
+      },
+    ],
+  },
+  {
+    id: "q3",
+    title: "Sleep and Recovery",
+    description: "Questionnaire about sleep patterns and recovery habits",
+    status: "draft",
+    createdAt: "2023-11-01T15:30:00Z",
+    updatedAt: "2023-11-01T15:30:00Z",
+    questions: [
+      {
+        id: "q3-1",
+        text: "How many hours of sleep do you typically get per night?",
+        type: "number",
+        required: true,
+        order: 1,
+      },
+      {
+        id: "q3-2",
+        text: "Do you have trouble falling asleep?",
+        type: "boolean",
+        required: true,
+        order: 2,
+      },
+    ],
+  },
+];
+
+export const users: User[] = [
+  {
+    id: "u1",
+    name: "Admin User",
+    email: "admin@fittish.com",
+    role: "admin",
+    createdAt: "2023-01-15T10:00:00Z",
+  },
+  {
+    id: "u2",
+    name: "John Doe",
+    email: "john@example.com",
+    role: "user",
+    createdAt: "2023-02-20T14:30:00Z",
+  },
+  {
+    id: "u3",
+    name: "Jane Smith",
+    email: "jane@example.com",
+    role: "user",
+    createdAt: "2023-03-10T09:15:00Z",
+  },
+];
