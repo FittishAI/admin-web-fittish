@@ -19,10 +19,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!hasHydrated) return;
 
     if (!token && !isPublic) {
-      router.replace("/auth/login");
+      router.replace("/login");
     }
 
-    if (token && pathname === "/auth/login") {
+    if (token && pathname === "/login") {
       router.replace("/dashboard");
     }
   }, [hasHydrated, token, pathname]);
