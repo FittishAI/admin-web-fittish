@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Eye, Pencil, Trash2, Search, ArrowLeftCircle } from "lucide-react";
@@ -35,11 +35,12 @@ const QUESTION_TYPE_LABELS: Record<string, string> = {
   boolean: "Yes / No",
 };
 
-export default function QuestionBoard({ categoryId }: { categoryId: string }) {
+export default function QuestionBoard() {
+  const { id } = useParams();
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [openDialogId, setOpenDialogId] = useState<number | null>(null);
-  const { data, isLoading } = useGetQuestions(Number(categoryId));
+  const { data, isLoading } = useGetQuestions(Number(id));
 
   const questions = Array.isArray(data) ? data : [];
 
@@ -126,7 +127,7 @@ export default function QuestionBoard({ categoryId }: { categoryId: string }) {
         </div>
         <Button
           onClick={() =>
-            router.push(`/dashboard/questionnaires/${categoryId}/create`)
+            router.push(`/dashboard/questionnaires/${id}/create`)
           }
         >
           + Add Question
