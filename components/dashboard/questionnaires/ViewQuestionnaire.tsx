@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetQuestionById } from "@/hooks/useGetQuestionsById";
-import { ArrowLeftCircle } from "lucide-react";
+import { ArrowLeftCircle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ViewQuestionnaire() {
@@ -73,6 +73,16 @@ export default function ViewQuestionnaire() {
           <ArrowLeftCircle className="h-5 w-5 text-slate-600" />
         </Button>
         <h1 className="text-2xl font-bold text-slate-900">{questionText}</h1>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            router.push(`/dashboard/questionnaires/${id}/edit`)
+          }
+        >
+          <Pencil className="w-4 h-4 mr-1" />
+          Edit
+        </Button>
       </div>
 
       {description && (
@@ -112,8 +122,8 @@ export default function ViewQuestionnaire() {
               {questionType.includes("multi")
                 ? "Select all that apply"
                 : questionType === "text"
-                ? "User types their answer"
-                : "Select one option"}
+                  ? "User types their answer"
+                  : "Select one option"}
             </CardDescription>
           </CardHeader>
           <CardContent>

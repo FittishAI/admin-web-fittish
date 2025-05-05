@@ -28,6 +28,20 @@ export function SuggestiveQuestionSearch({
     onSelect(q);
   };
 
+  const handleCreateNew = () => {
+    // Create a new question object without the id
+    const newQuestion = {
+      questionText: inputValue,
+    };
+    onSelect(newQuestion);
+    setInputValue(""); // Clear input field
+    setFocused(false); // Close the list
+  };
+
+  const filteredData = data?.filter((q) =>
+    q.questionText.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
   return (
     <div className="space-y-1">
       <Label className="text-sm text-muted-foreground">Existing</Label>
@@ -44,21 +58,26 @@ export function SuggestiveQuestionSearch({
         />
         {focused && (
           <CommandList>
-            {data
-              ?.filter((q) =>
-                q.questionText.toLowerCase().includes(inputValue.toLowerCase())
-              )
-              .map((q) => (
-                <CommandItem
-                  key={q.id}
-                  value={q.questionText}
-                  onSelect={() => handleSelect(q)}
-                  className="flex items-center justify-between"
-                >
-                  <span>{q.questionText}</span>
-                  <Badge variant="danger">Exists</Badge>
-                </CommandItem>
-              ))}
+            {filteredData?.map((q) => (
+              <CommandItem
+                key={q.id}
+                value={q.questionText}
+                onSelect={() => handleSelect(q)}
+                className="flex items-center justify-between"
+              >
+                <span>{q.questionText}</span>
+                <Badge variant="danger">Exists</Badge>
+              </CommandItem>
+            ))}
+            {filteredData?.length === 0 && (
+              <CommandItem
+                onSelect={handleCreateNew}
+                className="flex items-center justify-between"
+              >
+                <span>Create new option: {inputValue}</span>
+                <Badge variant="danger">Create</Badge>
+              </CommandItem>
+            )}
           </CommandList>
         )}
       </Command>

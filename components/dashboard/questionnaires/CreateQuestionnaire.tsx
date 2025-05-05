@@ -168,7 +168,11 @@ export default function CreateQuestion() {
     createQuestion(payload, {
       onSuccess: () => {
         toast.success("Question created successfully");
+        setTimeout(() => {
+          router.back();
+        }, 1500);
       },
+
       onError: (err: any) => {
         toast.error("Failed to create question", {
           description: err.message || "Unexpected error",

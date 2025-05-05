@@ -27,6 +27,9 @@ export interface Question {
   questionOrder?: number;
   defaultNextQuestionId?: number;
   options?: Option[];
+  nextQuestion?: {
+    id: number;
+  };
 }
 
 export interface Questionnaire {

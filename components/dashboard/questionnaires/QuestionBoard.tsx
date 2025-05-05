@@ -46,7 +46,7 @@ export default function QuestionBoard() {
 
   const normalized = (value: string) => value.toLowerCase().trim();
 
-  const filtered = questions.filter((q) =>
+  const filteredRaw = questions.filter((q) =>
     [
       q.id,
       q.categoryId,
@@ -59,6 +59,7 @@ export default function QuestionBoard() {
       .toLowerCase()
       .includes(normalized(search))
   );
+
   const { mutate: deleteQuestion, isPending } = useDeleteQuestion();
 
   const handleDelete = (id: number) => {
@@ -80,31 +81,64 @@ export default function QuestionBoard() {
   const getUserLevelBadge = (userLevel: string) => {
     switch (userLevel) {
       case "beginer":
-        return (
-          <Badge variant="default" className="text-blue-600 bg-blue-100">
-            Beginner
-          </Badge>
-        );
+        return <Badge className="text-blue-600 bg-blue-100">Beginner</Badge>;
       case "intermediate":
         return (
-          <Badge variant="default" className="text-green-600 bg-green-100">
-            Intermediate
-          </Badge>
+          <Badge className="text-green-600 bg-green-100">Intermediate</Badge>
         );
       case "advance":
-        return (
-          <Badge variant="default" className="text-red-600 bg-red-100">
-            Advanced
-          </Badge>
-        );
+        return <Badge className="text-red-600 bg-red-100">Advanced</Badge>;
       default:
-        return (
-          <Badge variant="default" className="text-gray-600 bg-gray-100">
-            Unknown
-          </Badge>
-        );
+        return <Badge className="text-gray-600 bg-gray-100">Unknown</Badge>;
     }
   };
+
+  const getPrefixedId = (index: number, categoryId: string) => {
+    const prefixMap: Record<string, string> = {
+      BASIC: "B",
+      MEAL: "M",
+      WORKOUT: "W",
+    };
+    const prefix = prefixMap[categoryId] || "Q";
+    return `${prefix}-${index + 1}`;
+  };
+
+  const childToParentMap = new Map<number, number>();
+  questions.forEach((q) => {
+    if (q.nextQuestion?.id) {
+      childToParentMap.set(q.nextQuestion.id, q.id);
+    }
+  });
+
+  const added = new Set<number>();
+  const sortedQuestions: typeof questions = [];
+
+  filteredRaw.forEach((parent) => {
+    if (parent.nextQuestion?.id && !added.has(parent.id)) {
+      sortedQuestions.push(parent);
+      added.add(parent.id);
+
+      const child = questions.find((q) => q.id === parent.nextQuestion?.id);
+      if (child && !added.has(child.id)) {
+        sortedQuestions.push(child);
+        added.add(child.id);
+      }
+    }
+  });
+
+  filteredRaw.forEach((q) => {
+    if (!added.has(q.id)) {
+      sortedQuestions.push(q);
+      added.add(q.id);
+    }
+  });
+
+  const nextQuestionMap = new Map<number, number>();
+  questions.forEach((q) => {
+    if (q.nextQuestion?.id) {
+      nextQuestionMap.set(q.nextQuestion.id, q.id);
+    }
+  });
 
   return (
     <section className="p-6 space-y-6">
@@ -126,9 +160,7 @@ export default function QuestionBoard() {
           </div>
         </div>
         <Button
-          onClick={() =>
-            router.push(`/dashboard/questionnaires/${id}/create`)
-          }
+          onClick={() => router.push(`/dashboard/questionnaires/${id}/create`)}
         >
           + Add Question
         </Button>
@@ -153,6 +185,7 @@ export default function QuestionBoard() {
               <TableHead>Type</TableHead>
               <TableHead>Level</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Relation</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -175,30 +208,36 @@ export default function QuestionBoard() {
                   <TableCell>
                     <Skeleton className="h-4 w-16" />
                   </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Skeleton className="h-8 w-16" />
                       <Skeleton className="h-8 w-16" />
                       <Skeleton className="h-8 w-16" />
                     </div>
                   </TableCell>
                 </TableRow>
               ))
-            ) : filtered.length > 0 ? (
-              filtered.map((q) => (
-                <TableRow key={q.id}>
-                  <TableCell className="font-medium">Q-{q.id}</TableCell>
+            ) : sortedQuestions.length > 0 ? (
+              sortedQuestions.map((q, index) => (
+                <TableRow
+                  key={q.id}
+                  onClick={() =>
+                    router.push(`/dashboard/questionnaires/${q.id}/view`)
+                  }
+                  className="cursor-pointer hover:bg-blue-50 transition-colors"
+                >
+                  <TableCell className="font-medium">
+                    {getPrefixedId(index, q.categoryId)}
+                  </TableCell>
                   <TableCell>
-                    <div className="flex items-center">
-                      <span>{q.questionText}</span>
-                    </div>
+                    <span>{q.questionText}</span>
                   </TableCell>
                   <TableCell className="capitalize">
-                    {QUESTION_TYPE_LABELS[q.questionType] || q.questionType}
+                    {QUESTION_TYPE_LABELS[q.questionType]}
                   </TableCell>
-                  <TableCell className="capitalize">
-                    {getUserLevelBadge(q.userLevel)}
-                  </TableCell>
+                  <TableCell>{getUserLevelBadge(q.userLevel)}</TableCell>
                   <TableCell>
                     <Badge
                       className={
@@ -211,18 +250,37 @@ export default function QuestionBoard() {
                     </Badge>
                     {q.isStartingQuestion && (
                       <Badge variant="secondary" className="ml-2 text-xs">
-                        Starting Question
+                        Starting
                       </Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2 flex-wrap">
+                      {/* {q.nextQuestion?.id && (
+                        <Badge className="bg-orange-100 text-orange-700 text-xs">Parent</Badge>
+                      )} */}
+                      {nextQuestionMap.has(q.id) && (
+                        <Badge className="bg-indigo-100 text-indigo-700 text-xs">
+                          Child of{" "}
+                          {getPrefixedId(
+                            sortedQuestions.findIndex(
+                              (x) => x.id === nextQuestionMap.get(q.id)
+                            ),
+                            q.categoryId
+                          )}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          router.push(`/dashboard/questionnaires/${q.id}/view`)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/dashboard/questionnaires/${q.id}/view`);
+                        }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         View
@@ -230,14 +288,14 @@ export default function QuestionBoard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          router.push(`/dashboard/questionnaires/${q.id}/edit`)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/dashboard/questionnaires/${q.id}/edit`);
+                        }}
                       >
                         <Pencil className="w-4 h-4 mr-1" />
                         Edit
                       </Button>
-
                       <Dialog
                         open={openDialogId === q.id}
                         onOpenChange={(open) =>
@@ -245,12 +303,16 @@ export default function QuestionBoard() {
                         }
                       >
                         <DialogTrigger asChild>
-                          <Button size="sm" variant="destructive">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Trash2 className="w-4 h-4 mr-1" />
                             Delete
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent onClick={(e) => e.stopPropagation()}>
                           <DialogHeader>
                             <DialogTitle>Confirm Deletion</DialogTitle>
                           </DialogHeader>
@@ -262,13 +324,19 @@ export default function QuestionBoard() {
                           <DialogFooter className="pt-4">
                             <Button
                               variant="ghost"
-                              onClick={() => setOpenDialogId(null)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenDialogId(null);
+                              }}
                             >
                               Cancel
                             </Button>
                             <Button
                               variant="destructive"
-                              onClick={() => handleDelete(q.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(q.id);
+                              }}
                             >
                               Confirm Delete
                             </Button>
@@ -282,7 +350,7 @@ export default function QuestionBoard() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center text-muted-foreground"
                 >
                   No questions found.
