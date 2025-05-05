@@ -187,12 +187,10 @@ export default function EditQuestion() {
       <div className="space-y-2">
         <Label>{isNext ? "Next Question Text" : "Question Text"}</Label>
         <div className="space-y-1">
-          {questionData?.categoryId && (
-            <SuggestiveQuestionSearch
-              categoryId={categoryMap[questionData.categoryId]}
-              onSelect={(q) => setNextQuestion(q)}
-            />
-          )}
+          <Input
+            value={q.questionText}
+            onChange={(e) => setField("questionText", e.target.value)}
+          />
 
           <p className="text-xs text-muted-foreground">
             Search to reuse an existing question

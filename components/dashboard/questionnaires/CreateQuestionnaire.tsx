@@ -188,12 +188,10 @@ export default function CreateQuestion() {
     <>
       <div className="space-y-2">
         <Label>{isNext ? "Next Question Text" : "Question Text"}</Label>
-        {questionData?.categoryId && (
-          <SuggestiveQuestionSearch
-            categoryId={categoryMap[questionData.categoryId]}
-            onSelect={(q) => setNextQuestion(q)}
-          />
-        )}
+        <Input
+          value={q.questionText}
+          onChange={(e) => setField("questionText", e.target.value)}
+        />
       </div>
 
       <div className="space-y-2">
