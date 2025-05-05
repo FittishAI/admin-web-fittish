@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetQuestionById } from "@/hooks/useGetQuestionsById";
-import { ArrowLeft, ArrowLeftCircle } from "lucide-react";
+import { ArrowLeftCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ViewQuestionnaire() {
@@ -19,11 +19,8 @@ export default function ViewQuestionnaire() {
   const { id } = useParams();
   const { data, isLoading } = useGetQuestionById(Number(id));
 
-  const formatType = (type: string) => {
-    return type
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  };
+  const formatType = (type: string) =>
+    type.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
   if (isLoading) {
     return (
@@ -74,7 +71,7 @@ export default function ViewQuestionnaire() {
           className="h-8 w-8"
         >
           <ArrowLeftCircle className="h-5 w-5 text-slate-600" />
-          </Button>
+        </Button>
         <h1 className="text-2xl font-bold text-slate-900">{questionText}</h1>
       </div>
 
@@ -86,7 +83,7 @@ export default function ViewQuestionnaire() {
         <Badge variant="secondary">{formatType(questionType)}</Badge>
         {isRequired && <Badge variant="default">Required</Badge>}
         {isStartingQuestion && (
-          <Badge className="bg-blue-100 text-blue-700">Starting Question</Badge>
+          <Badge className="bg-blue-100 text-blue-700">Starting</Badge>
         )}
         {dependencyQuestion && (
           <Badge className="bg-yellow-100 text-yellow-800">
@@ -107,57 +104,48 @@ export default function ViewQuestionnaire() {
         </Badge>
       </div>
 
-      {options && options.length > 0 && (
+      {(questionType === "text" || (options && options.length > 0)) && (
         <Card>
           <CardHeader>
             <CardTitle>Answer Options</CardTitle>
-            <CardDescription>Select one option below</CardDescription>
+            <CardDescription>
+              {questionType.includes("multi")
+                ? "Select all that apply"
+                : questionType === "text"
+                ? "User types their answer"
+                : "Select one option"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {questionType === "multiple_choice_single" ? (
-              <div className="space-y-2">
-                {options.map((opt: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-2 rounded-md border border-gray-200 hover:border-primary transition"
-                  >
-                    <div className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center">
-                      <div className="h-2 w-2 bg-primary rounded-full" />
-                    </div>
-                    <span className="text-sm text-slate-700">
-                      {opt.optionText}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : questionType === "multiple_choice_multi" ? (
-              <div className="space-y-2">
-                {options.map((opt: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-2 rounded-md border border-gray-200 hover:border-primary transition"
-                  >
-                    <div className="h-4 w-4 rounded-sm border-2 border-primary flex items-center justify-center">
-                      <div className="h-2 w-2 bg-primary rounded-sm" />
-                    </div>
-                    <span className="text-sm text-slate-700">
-                      {opt.optionText}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            {questionType === "text" ? (
+              <input
+                type="text"
+                placeholder="User response goes here..."
+                className="w-full border border-gray-300 rounded-md p-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled
+              />
             ) : (
-              <ul className="space-y-2 text-sm">
+              <div className="space-y-2">
                 {options.map((opt: any, index: number) => (
-                  <li
+                  <div
                     key={index}
-                    className="flex items-center gap-2 p-2 rounded-md border border-gray-200 hover:border-primary transition"
+                    className="flex items-center gap-3 p-2 rounded-md border border-gray-200 hover:border-primary transition"
                   >
-                    <span className="h-2 w-2 bg-primary rounded-full" />
-                    <span>{opt.optionText}</span>
-                  </li>
+                    {questionType === "multiple_choice_single" && (
+                      <div className="h-4 w-4 rounded-full border-2 border-primary" />
+                    )}
+                    {questionType === "multiple_choice_multi" && (
+                      <div className="h-4 w-4 rounded-sm border-2 border-primary" />
+                    )}
+                    {questionType === "boolean" && (
+                      <div className="h-4 w-4 bg-primary rounded-full" />
+                    )}
+                    <span className="text-sm text-slate-700">
+                      {opt.optionText}
+                    </span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </CardContent>
         </Card>

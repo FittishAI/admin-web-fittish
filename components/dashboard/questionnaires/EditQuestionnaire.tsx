@@ -19,6 +19,7 @@ import { ArrowLeftCircle, Save, Trash2, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useEditQuestion } from "@/hooks/useEditQuestion";
 import { useGetQuestionById } from "@/hooks/useGetQuestionsById";
+import { SuggestiveQuestionSearch } from "@/components/ui/combobox";
 
 const emptyQuestion = () => ({
   questionText: "",
@@ -29,9 +30,16 @@ const emptyQuestion = () => ({
   options: [],
 });
 
+const categoryMap: Record<string, number> = {
+  BASIC: 1,
+  MEAL: 2,
+  WORKOUT: 3,
+};
+
 export default function EditQuestion() {
   const router = useRouter();
   const { id } = useParams();
+  console.log("id", id);
   const { mutate: editQuestion, isPending } = useEditQuestion();
   const { data } = useGetQuestionById(Number(id));
 
@@ -178,10 +186,18 @@ export default function EditQuestion() {
     <>
       <div className="space-y-2">
         <Label>{isNext ? "Next Question Text" : "Question Text"}</Label>
-        <Input
-          value={q.questionText}
-          onChange={(e) => setField("questionText", e.target.value)}
-        />
+        <div className="space-y-1">
+          {questionData?.categoryId && (
+            <SuggestiveQuestionSearch
+              categoryId={categoryMap[questionData.categoryId]}
+              onSelect={(q) => setNextQuestion(q)}
+            />
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            Search to reuse an existing question
+          </p>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -224,7 +240,7 @@ export default function EditQuestion() {
             )}
           </div>
           {opts.map((opt, i) => (
-            <div key={opt.id} className="flex items-center gap-2">
+            <div key={opt.id || i} className="flex items-center gap-2">
               <Input
                 value={opt.optionText}
                 onChange={(e) => handleOptionChange(i, e.target.value, isNext)}
@@ -256,7 +272,7 @@ export default function EditQuestion() {
       <div className="flex items-center gap-6 pt-6">
         <div className="flex items-center space-x-2">
           <Switch
-            checked={q.required}
+            checked={!q.required}
             onCheckedChange={(val) => setField("required", val)}
           />
           <Label>Required</Label>
@@ -264,7 +280,7 @@ export default function EditQuestion() {
         {!isNext && (
           <div className="flex items-center space-x-2">
             <Switch
-              checked={q.isStartingQuestion}
+              checked={!q.isStartingQuestion}
               onCheckedChange={(val) => setField("isStartingQuestion", val)}
             />
             <Label>Is Starting Question</Label>

@@ -23,16 +23,23 @@ import {
 import { ArrowLeftCircle, Save, Trash2, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateQuestion } from '@/hooks/useCreateQuestion';
+import { SuggestiveQuestionSearch } from '@/components/ui/combobox';
 
 const emptyQuestion = () => ({
   questionText: '',
   questionType: 'text',
-  required: false,
-  isStartingQuestion: true,
+  required: true,
+  isStartingQuestion: false,
   status: 'draft',
   description: '',
   options: [],
 });
+
+const categoryMap: Record<string, number> = {
+  BASIC: 1,
+  MEAL: 2,
+  WORKOUT: 3,
+};
 
 export default function CreateQuestion() {
   const router = useRouter();
@@ -182,10 +189,12 @@ export default function CreateQuestion() {
     <>
       <div className="space-y-2">
         <Label>{isNext ? 'Next Question Text' : 'Question Text'}</Label>
-        <Input
-          value={q.questionText}
-          onChange={(e) => setField('questionText', e.target.value)}
-        />
+        {questionData?.categoryId && (
+                    <SuggestiveQuestionSearch
+                      categoryId={categoryMap[questionData.categoryId]}
+                      onSelect={(q) => setNextQuestion(q)}
+                    />
+                  )}
       </div>
 
       <div className="space-y-2">
@@ -220,7 +229,7 @@ export default function CreateQuestion() {
             )}
           </div>
           {opts.map((opt, i) => (
-            <div key={opt.id} className="flex items-center gap-2">
+            <div key={opt.id || i} className="flex items-center gap-2">
               <Input
                 value={opt.optionText}
                 onChange={(e) => handleOptionChange(i, e.target.value, isNext)}
@@ -251,7 +260,7 @@ export default function CreateQuestion() {
 
       <div className="flex items-center space-x-2 pt-6">
         <Switch
-          checked={q.required}
+          checked={!q.required}
           onCheckedChange={(val) => setField('required', val)}
           className="bg-muted data-[state=checked]:bg-slate-800"
         />
@@ -261,7 +270,7 @@ export default function CreateQuestion() {
       {!isNext && (
         <div className="flex items-center space-x-2 pt-6">
           <Switch
-            checked={q.isStartingQuestion}
+            checked={!q.isStartingQuestion}
             onCheckedChange={(val) => setField('isStartingQuestion', val)}
             className="bg-muted data-[state=checked]:bg-slate-800"
           />
