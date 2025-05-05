@@ -272,7 +272,7 @@ export default function EditQuestion() {
       <div className="flex items-center gap-6 pt-6">
         <div className="flex items-center space-x-2">
           <Switch
-            checked={!q.required}
+            checked={q.required}
             onCheckedChange={(val) => setField("required", val)}
           />
           <Label>Required</Label>
@@ -280,7 +280,7 @@ export default function EditQuestion() {
         {!isNext && (
           <div className="flex items-center space-x-2">
             <Switch
-              checked={!q.isStartingQuestion}
+              checked={q.isStartingQuestion}
               onCheckedChange={(val) => setField("isStartingQuestion", val)}
             />
             <Label>Is Starting Question</Label>

@@ -1,37 +1,32 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation'; // Updated to use useParams
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation"; // Updated to use useParams
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { ArrowLeftCircle, Save, Trash2, PlusCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { useCreateQuestion } from '@/hooks/useCreateQuestion';
-import { SuggestiveQuestionSearch } from '@/components/ui/combobox';
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeftCircle, Save, Trash2, PlusCircle } from "lucide-react";
+import { toast } from "sonner";
+import { useCreateQuestion } from "@/hooks/useCreateQuestion";
+import { SuggestiveQuestionSearch } from "@/components/ui/combobox";
 
 const emptyQuestion = () => ({
-  questionText: '',
-  questionType: 'text',
+  questionText: "",
+  questionType: "text",
   required: true,
   isStartingQuestion: false,
-  status: 'draft',
-  description: '',
+  status: "draft",
+  description: "",
   options: [],
 });
 
@@ -53,18 +48,18 @@ export default function CreateQuestion() {
 
   useEffect(() => {
     const categoryMapping: { [key: string]: string } = {
-      '1': 'BASIC',
-      '2': 'MEAL',
-      '3': 'WORKOUT',
+      "1": "BASIC",
+      "2": "MEAL",
+      "3": "WORKOUT",
     };
-    
+
     setQuestionData({
-      questionText: '',
-      questionType: 'text',
+      questionText: "",
+      questionType: "text",
       required: false,
-      status: 'draft',
-      description: '',
-      categoryId: categoryMapping[Number(id)] || 'BASIC',
+      status: "draft",
+      description: "",
+      categoryId: categoryMapping[Number(id)] || "BASIC",
       isStartingQuestion: true,
       dependencyQuestion: false,
     });
@@ -89,7 +84,7 @@ export default function CreateQuestion() {
   };
 
   const addOption = (isNext = false) => {
-    const newOpt = { id: Date.now(), optionText: '' };
+    const newOpt = { id: Date.now(), optionText: "" };
     isNext
       ? updateNextOptions([...nextOptions, newOpt])
       : updateOptions([...options, newOpt]);
@@ -104,10 +99,10 @@ export default function CreateQuestion() {
   const handleTypeChange = (value: string, isNext = false) => {
     let updatedOptions: any[] = [];
 
-    if (value === 'boolean') {
+    if (value === "boolean") {
       updatedOptions = [
-        { id: 1, optionText: 'Yes' },
-        { id: 2, optionText: 'No' },
+        { id: 1, optionText: "Yes" },
+        { id: 2, optionText: "No" },
       ];
     }
 
@@ -120,13 +115,13 @@ export default function CreateQuestion() {
     }
   };
 
-  const validateQuestion = (q: any, opts: any[], label = 'Question') => {
+  const validateQuestion = (q: any, opts: any[], label = "Question") => {
     if (!q?.questionText?.trim()) {
       toast.error(`${label} text is required`);
       return false;
     }
     if (
-      ['multiple_choice_single', 'multiple_choice_multi', 'boolean'].includes(
+      ["multiple_choice_single", "multiple_choice_multi", "boolean"].includes(
         q.questionType
       ) &&
       opts.length === 0
@@ -140,19 +135,23 @@ export default function CreateQuestion() {
   const handleSave = () => {
     if (!questionData) return;
 
-    if (!validateQuestion(questionData, options, 'Main Question')) return;
-    if (nextQuestion && !validateQuestion(nextQuestion, nextOptions, 'Next Question')) return;
+    if (!validateQuestion(questionData, options, "Main Question")) return;
+    if (
+      nextQuestion &&
+      !validateQuestion(nextQuestion, nextOptions, "Next Question")
+    )
+      return;
 
     const payload = {
       questionText: questionData.questionText,
       questionType: questionData.questionType,
-      userLevel: 'beginer',
+      userLevel: "beginer",
       isRequired: questionData.required,
-      isActive: questionData.status === 'published',
+      isActive: questionData.status === "published",
       isStartingQuestion: questionData.isStartingQuestion ?? true,
       dependencyQuestion: questionData.dependencyQuestion ?? false,
-      categoryId: questionData.categoryId ?? 'BASIC',  // Make sure categoryId is from state
-      description: questionData.description ?? '',
+      categoryId: questionData.categoryId ?? "BASIC", // Make sure categoryId is from state
+      description: questionData.description ?? "",
       options,
       nextQuestion: nextQuestion
         ? {
@@ -160,7 +159,7 @@ export default function CreateQuestion() {
             questionType: nextQuestion.questionType,
             required: nextQuestion.required,
             status: nextQuestion.status,
-            description: nextQuestion.description ?? '',
+            description: nextQuestion.description ?? "",
             options: nextOptions,
           }
         : undefined,
@@ -168,11 +167,11 @@ export default function CreateQuestion() {
 
     createQuestion(payload, {
       onSuccess: () => {
-        toast.success('Question created successfully');
+        toast.success("Question created successfully");
       },
       onError: (err: any) => {
-        toast.error('Failed to create question', {
-          description: err.message || 'Unexpected error',
+        toast.error("Failed to create question", {
+          description: err.message || "Unexpected error",
         });
       },
     });
@@ -188,13 +187,13 @@ export default function CreateQuestion() {
   ) => (
     <>
       <div className="space-y-2">
-        <Label>{isNext ? 'Next Question Text' : 'Question Text'}</Label>
+        <Label>{isNext ? "Next Question Text" : "Question Text"}</Label>
         {questionData?.categoryId && (
-                    <SuggestiveQuestionSearch
-                      categoryId={categoryMap[questionData.categoryId]}
-                      onSelect={(q) => setNextQuestion(q)}
-                    />
-                  )}
+          <SuggestiveQuestionSearch
+            categoryId={categoryMap[questionData.categoryId]}
+            onSelect={(q) => setNextQuestion(q)}
+          />
+        )}
       </div>
 
       <div className="space-y-2">
@@ -208,21 +207,29 @@ export default function CreateQuestion() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="text">Text</SelectItem>
-            <SelectItem value="multiple_choice_single">Multiple Choice (Single)</SelectItem>
-            <SelectItem value="multiple_choice_multi">Multiple Choice (Multi)</SelectItem>
+            <SelectItem value="multiple_choice_single">
+              Multiple Choice (Single)
+            </SelectItem>
+            <SelectItem value="multiple_choice_multi">
+              Multiple Choice (Multi)
+            </SelectItem>
             <SelectItem value="boolean">Yes / No</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {['multiple_choice_single', 'multiple_choice_multi', 'boolean'].includes(
+      {["multiple_choice_single", "multiple_choice_multi", "boolean"].includes(
         q.questionType
       ) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Options</Label>
-            {q.questionType !== 'boolean' && (
-              <Button size="sm" variant="outline" onClick={() => addOption(isNext)}>
+            {q.questionType !== "boolean" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => addOption(isNext)}
+              >
                 <PlusCircle className="h-4 w-4 mr-1" />
                 Add Option
               </Button>
@@ -234,7 +241,7 @@ export default function CreateQuestion() {
                 value={opt.optionText}
                 onChange={(e) => handleOptionChange(i, e.target.value, isNext)}
               />
-              {q.questionType !== 'boolean' && (
+              {q.questionType !== "boolean" && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -252,16 +259,16 @@ export default function CreateQuestion() {
       <div className="space-y-2">
         <Label>Description</Label>
         <Textarea
-          value={q.description || ''}
-          onChange={(e) => setField('description', e.target.value)}
+          value={q.description || ""}
+          onChange={(e) => setField("description", e.target.value)}
           rows={3}
         />
       </div>
 
       <div className="flex items-center space-x-2 pt-6">
         <Switch
-          checked={!q.required}
-          onCheckedChange={(val) => setField('required', val)}
+          checked={q.required}
+          onCheckedChange={(val) => setField("required", val)}
           className="bg-muted data-[state=checked]:bg-slate-800"
         />
         <Label>Required</Label>
@@ -270,8 +277,8 @@ export default function CreateQuestion() {
       {!isNext && (
         <div className="flex items-center space-x-2 pt-6">
           <Switch
-            checked={!q.isStartingQuestion}
-            onCheckedChange={(val) => setField('isStartingQuestion', val)}
+            checked={q.isStartingQuestion}
+            onCheckedChange={(val) => setField("isStartingQuestion", val)}
             className="bg-muted data-[state=checked]:bg-slate-800"
           />
           <Label>Is Starting Question</Label>
@@ -282,7 +289,7 @@ export default function CreateQuestion() {
         <Label>Status</Label>
         <Select
           value={q.status}
-          onValueChange={(val) => setField('status', val)}
+          onValueChange={(val) => setField("status", val)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select status" />
@@ -302,7 +309,9 @@ export default function CreateQuestion() {
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ArrowLeftCircle className="h-5 w-5 text-slate-600" />
         </Button>
-        <h1 className="text-3xl font-semibold text-slate-800">Create Question</h1>
+        <h1 className="text-3xl font-semibold text-slate-800">
+          Create Question
+        </h1>
       </div>
 
       <Card>
@@ -323,7 +332,7 @@ export default function CreateQuestion() {
               size="icon"
               onClick={() => {
                 setNextQuestion(null);
-                toast.success('Next question removed');
+                toast.success("Next question removed");
               }}
               className="text-red-500"
             >
@@ -335,7 +344,7 @@ export default function CreateQuestion() {
               size="sm"
               onClick={() => {
                 setNextQuestion(emptyQuestion());
-                toast.success('Next question added');
+                toast.success("Next question added");
               }}
             >
               <PlusCircle className="mr-1 h-4 w-4" />
@@ -346,7 +355,12 @@ export default function CreateQuestion() {
 
         {nextQuestion && (
           <CardContent className="space-y-4">
-            {renderQuestionBlock(nextQuestion, updateNextQuestionField, nextOptions, true)}
+            {renderQuestionBlock(
+              nextQuestion,
+              updateNextQuestionField,
+              nextOptions,
+              true
+            )}
           </CardContent>
         )}
       </Card>
