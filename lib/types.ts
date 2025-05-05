@@ -8,19 +8,25 @@ export type QuestionType =
   | "scale";
 
 export interface Option {
-  id: string;
-  value: string;
-  label: string;
-}
+  id: number;
+  optionText: string;
+  optionOrder?: number;
+  nextQuestionId?: number;
+}  
 
 export interface Question {
-  id: string;
-  text: string;
-  type: QuestionType;
-  required: boolean;
+  id: number;
+  categoryId: Category;
+  questionText: string;
+  questionType: QuestionType;
+  userLevel: UserLevel;
+  dependencyQuestion: boolean;
+  isRequired: boolean;
+  isStartingQuestion: boolean;
+  isActive: boolean;
+  questionOrder?: number;
+  defaultNextQuestionId?: number;
   options?: Option[];
-  order: number;
-  description?: string;
 }
 
 export interface Questionnaire {
@@ -32,6 +38,10 @@ export interface Questionnaire {
   updatedAt: string;
   questions: Question[];
 }
+
+export type UserLevel = "beginer" | "intermediate" | "advance";
+export type Category = "BASIC" | "MEAL" | "WORKOUT";
+export type QuestionStatus = "Active" | "Inactive";
 
 // User Types
 export interface User {

@@ -2,14 +2,16 @@
 
 import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/lib/store/authSlice";
 
 interface HeaderProps {
   onMenuClick?: () => void;
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
+  const logout = useAuthStore((s) => s.logout);
   const handleLogout = () => {
-    console.log("Logout clicked");
+    logout();
   };
 
   return (

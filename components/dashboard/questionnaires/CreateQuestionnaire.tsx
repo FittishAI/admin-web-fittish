@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation'; // Updated to use useParams
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -13,152 +14,345 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, ArrowLeftCircle, Save } from 'lucide-react';
-import type { Question, Questionnaire } from '@/lib/types';
-import { QuestionForm } from './QuestionForm';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { ArrowLeftCircle, Save, Trash2, PlusCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { useCreateQuestion } from '@/hooks/useCreateQuestion';
 
-export default function CreateQuestionnaire() {
+const emptyQuestion = () => ({
+  questionText: '',
+  questionType: 'text',
+  required: false,
+  isStartingQuestion: true,
+  status: 'draft',
+  description: '',
+  options: [],
+});
+
+export default function CreateQuestion() {
   const router = useRouter();
+  const { id } = useParams();
+  const { mutate: createQuestion, isPending } = useCreateQuestion();
 
-  const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
-    id: `q-${Date.now()}`,
-    title: '',
-    description: '',
-    status: 'draft',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    questions: [],
-  });
+  const [questionData, setQuestionData] = useState<any>(null);
+  const [options, setOptions] = useState<any[]>([]);
+  const [nextQuestion, setNextQuestion] = useState<any | null>(null);
+  const [nextOptions, setNextOptions] = useState<any[]>([]);
 
-  const handleAddQuestion = () => {
-    const newQuestion: Question = {
-      id: `q-${Date.now()}`,
-      text: 'New Question',
-      type: 'text',
-      required: false,
-      order: questionnaire.questions.length + 1,
+  useEffect(() => {
+    const categoryMapping: { [key: string]: string } = {
+      '1': 'BASIC',
+      '2': 'MEAL',
+      '3': 'WORKOUT',
     };
-    setQuestionnaire({
-      ...questionnaire,
-      questions: [...questionnaire.questions, newQuestion],
+    
+    setQuestionData({
+      questionText: '',
+      questionType: 'text',
+      required: false,
+      status: 'draft',
+      description: '',
+      categoryId: categoryMapping[Number(id)] || 'BASIC',
+      isStartingQuestion: true,
+      dependencyQuestion: false,
     });
+  }, [id]);
+
+  const updateQuestionField = (field: string, value: any) => {
+    setQuestionData({ ...questionData, [field]: value });
   };
 
-  const handleQuestionChange = (updated: Question, index: number) => {
-    const newQuestions = [...questionnaire.questions];
-    newQuestions[index] = updated;
-    setQuestionnaire({ ...questionnaire, questions: newQuestions });
+  const updateNextQuestionField = (field: string, value: any) => {
+    if (!nextQuestion) return;
+    setNextQuestion({ ...nextQuestion, [field]: value });
   };
 
-  const handleQuestionDelete = (index: number) => {
-    const newQuestions = questionnaire.questions.filter((_, i) => i !== index);
-    const reordered = newQuestions.map((q, i) => ({ ...q, order: i + 1 }));
-    setQuestionnaire({ ...questionnaire, questions: reordered });
+  const updateOptions = (opts: any[]) => setOptions(opts);
+  const updateNextOptions = (opts: any[]) => setNextOptions(opts);
+
+  const handleOptionChange = (index: number, value: string, isNext = false) => {
+    const target = isNext ? [...nextOptions] : [...options];
+    target[index].optionText = value;
+    isNext ? updateNextOptions(target) : updateOptions(target);
+  };
+
+  const addOption = (isNext = false) => {
+    const newOpt = { id: Date.now(), optionText: '' };
+    isNext
+      ? updateNextOptions([...nextOptions, newOpt])
+      : updateOptions([...options, newOpt]);
+  };
+
+  const deleteOption = (index: number, isNext = false) => {
+    const target = isNext ? [...nextOptions] : [...options];
+    target.splice(index, 1);
+    isNext ? updateNextOptions(target) : updateOptions(target);
+  };
+
+  const handleTypeChange = (value: string, isNext = false) => {
+    let updatedOptions: any[] = [];
+
+    if (value === 'boolean') {
+      updatedOptions = [
+        { id: 1, optionText: 'Yes' },
+        { id: 2, optionText: 'No' },
+      ];
+    }
+
+    if (isNext) {
+      setNextQuestion({ ...nextQuestion, questionType: value });
+      updateNextOptions(updatedOptions);
+    } else {
+      setQuestionData({ ...questionData, questionType: value });
+      updateOptions(updatedOptions);
+    }
+  };
+
+  const validateQuestion = (q: any, opts: any[], label = 'Question') => {
+    if (!q?.questionText?.trim()) {
+      toast.error(`${label} text is required`);
+      return false;
+    }
+    if (
+      ['multiple_choice_single', 'multiple_choice_multi', 'boolean'].includes(
+        q.questionType
+      ) &&
+      opts.length === 0
+    ) {
+      toast.error(`${label} requires at least one option`);
+      return false;
+    }
+    return true;
   };
 
   const handleSave = () => {
-    if (!questionnaire.title.trim()) {
-      alert('Please enter a title for the questionnaire');
-      return;
-    }
+    if (!questionData) return;
 
-    console.log('Created:', questionnaire);
-    router.push('/dashboard/questionnaires');
+    if (!validateQuestion(questionData, options, 'Main Question')) return;
+    if (nextQuestion && !validateQuestion(nextQuestion, nextOptions, 'Next Question')) return;
+
+    const payload = {
+      questionText: questionData.questionText,
+      questionType: questionData.questionType,
+      userLevel: 'beginer',
+      isRequired: questionData.required,
+      isActive: questionData.status === 'published',
+      isStartingQuestion: questionData.isStartingQuestion ?? true,
+      dependencyQuestion: questionData.dependencyQuestion ?? false,
+      categoryId: questionData.categoryId ?? 'BASIC',  // Make sure categoryId is from state
+      description: questionData.description ?? '',
+      options,
+      nextQuestion: nextQuestion
+        ? {
+            questionText: nextQuestion.questionText,
+            questionType: nextQuestion.questionType,
+            required: nextQuestion.required,
+            status: nextQuestion.status,
+            description: nextQuestion.description ?? '',
+            options: nextOptions,
+          }
+        : undefined,
+    };
+
+    createQuestion(payload, {
+      onSuccess: () => {
+        toast.success('Question created successfully');
+      },
+      onError: (err: any) => {
+        toast.error('Failed to create question', {
+          description: err.message || 'Unexpected error',
+        });
+      },
+    });
   };
 
+  if (!questionData) return null;
+
+  const renderQuestionBlock = (
+    q: any,
+    setField: any,
+    opts: any[],
+    isNext = false
+  ) => (
+    <>
+      <div className="space-y-2">
+        <Label>{isNext ? 'Next Question Text' : 'Question Text'}</Label>
+        <Input
+          value={q.questionText}
+          onChange={(e) => setField('questionText', e.target.value)}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Question Type</Label>
+        <Select
+          value={q.questionType}
+          onValueChange={(val) => handleTypeChange(val, isNext)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="text">Text</SelectItem>
+            <SelectItem value="multiple_choice_single">Multiple Choice (Single)</SelectItem>
+            <SelectItem value="multiple_choice_multi">Multiple Choice (Multi)</SelectItem>
+            <SelectItem value="boolean">Yes / No</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {['multiple_choice_single', 'multiple_choice_multi', 'boolean'].includes(
+        q.questionType
+      ) && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Options</Label>
+            {q.questionType !== 'boolean' && (
+              <Button size="sm" variant="outline" onClick={() => addOption(isNext)}>
+                <PlusCircle className="h-4 w-4 mr-1" />
+                Add Option
+              </Button>
+            )}
+          </div>
+          {opts.map((opt, i) => (
+            <div key={opt.id} className="flex items-center gap-2">
+              <Input
+                value={opt.optionText}
+                onChange={(e) => handleOptionChange(i, e.target.value, isNext)}
+              />
+              {q.questionType !== 'boolean' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500"
+                  onClick={() => deleteOption(i, isNext)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label>Description</Label>
+        <Textarea
+          value={q.description || ''}
+          onChange={(e) => setField('description', e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div className="flex items-center space-x-2 pt-6">
+        <Switch
+          checked={q.required}
+          onCheckedChange={(val) => setField('required', val)}
+          className="bg-muted data-[state=checked]:bg-slate-800"
+        />
+        <Label>Required</Label>
+      </div>
+
+      {!isNext && (
+        <div className="flex items-center space-x-2 pt-6">
+          <Switch
+            checked={q.isStartingQuestion}
+            onCheckedChange={(val) => setField('isStartingQuestion', val)}
+            className="bg-muted data-[state=checked]:bg-slate-800"
+          />
+          <Label>Is Starting Question</Label>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label>Status</Label>
+        <Select
+          value={q.status}
+          onValueChange={(val) => setField('status', val)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
+    <div className="space-y-8">
+      <div className="flex items-center gap-3">
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ArrowLeftCircle className="h-5 w-5 text-slate-600" />
         </Button>
-        <h1 className="text-3xl font-semibold text-slate-800">Create Questionnaire</h1>
+        <h1 className="text-3xl font-semibold text-slate-800">Create Question</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Questionnaire Details</CardTitle>
+          <CardTitle className="text-lg">Main Question</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={questionnaire.title}
-                onChange={(e) => setQuestionnaire({ ...questionnaire, title: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={questionnaire.status}
-                onValueChange={(value) =>
-                  setQuestionnaire({ ...questionnaire, status: value as 'draft' | 'published' })
-                }
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={questionnaire.description}
-              onChange={(e) => setQuestionnaire({ ...questionnaire, description: e.target.value })}
-              rows={3}
-              placeholder="Add a short description or note"
-            />
-          </div>
+          {renderQuestionBlock(questionData, updateQuestionField, options)}
         </CardContent>
       </Card>
 
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-800">
-            Questions ({questionnaire.questions.length})
-          </h2>
-          <Button onClick={handleAddQuestion} className="flex items-center text-sm">
-            <PlusCircle className="mr-2 h-4 w-4 text-blue-600" />
-            Add Question
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          {questionnaire.questions.length > 0 ? (
-            questionnaire.questions.map((question, index) => (
-              <QuestionForm
-                key={question.id}
-                question={question}
-                questionIndex={index}
-                onQuestionChange={handleQuestionChange}
-                onQuestionDelete={handleQuestionDelete}
-              />
-            ))
+      <Card>
+        <CardHeader className="flex flex-row justify-between items-center">
+          <CardTitle className="text-lg">Next Question (Optional)</CardTitle>
+          {nextQuestion ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setNextQuestion(null);
+                toast.success('Next question removed');
+              }}
+              className="text-red-500"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
           ) : (
-            <div className="text-center p-8 border border-dashed rounded-lg text-muted-foreground">
-              <p>No questions added yet. Click "Add Question" to create your first one.</p>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setNextQuestion(emptyQuestion());
+                toast.success('Next question added');
+              }}
+            >
+              <PlusCircle className="mr-1 h-4 w-4" />
+              Add Next Question
+            </Button>
           )}
-        </div>
-      </div>
+        </CardHeader>
 
-      <div className="flex items-center justify-end gap-4">
+        {nextQuestion && (
+          <CardContent className="space-y-4">
+            {renderQuestionBlock(nextQuestion, updateNextQuestionField, nextOptions, true)}
+          </CardContent>
+        )}
+      </Card>
+
+      <div className="flex items-center justify-end gap-3">
         <Button variant="outline" onClick={() => router.back()}>
           Cancel
         </Button>
-        <Button onClick={handleSave} className="bg-blue-600 text-white hover:bg-blue-700">
+        <Button
+          onClick={handleSave}
+          disabled={isPending}
+          className="bg-blue-600 text-white hover:bg-blue-700"
+        >
           <Save className="mr-2 h-4 w-4" />
-          Create Questionnaire
+          Save Question
         </Button>
       </div>
     </div>

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Header from "../ui/header"; // ← we'll pass props now
 import Sidebar from "../ui/sidebar";
+import { Toaster } from "sonner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <main className="flex-1 overflow-y-auto px-4 md:px-6 py-6 bg-gray-50">
           {children}
+          <Toaster richColors position="top-right" />
         </main>
       </div>
     </div>

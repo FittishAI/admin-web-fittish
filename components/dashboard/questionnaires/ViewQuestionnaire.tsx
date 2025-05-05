@@ -1,148 +1,167 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
+import { useParams, useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-
-const questionnaire = {
-  id: '1',
-  title: 'Fitness Goal Assessment',
-  description: 'A questionnaire to evaluate fitness goals and lifestyle habits.',
-  status: 'published',
-  createdAt: '2023-09-15T10:00:00Z',
-  updatedAt: '2023-09-20T14:30:00Z',
-  questions: [
-    {
-      id: 'q1',
-      text: 'What are your primary fitness goals?',
-      description: 'Choose what best describes your current goal',
-      type: 'multipleChoice',
-      required: true,
-      order: 1,
-      options: [
-        { id: 'o1', label: 'Lose weight' },
-        { id: 'o2', label: 'Build muscle' },
-        { id: 'o3', label: 'Improve endurance' },
-      ],
-    },
-    {
-      id: 'q2',
-      text: 'How many days a week do you exercise?',
-      type: 'number',
-      required: false,
-      order: 2,
-    },
-    {
-      id: 'q3',
-      text: 'Do you have any injuries?',
-      type: 'boolean',
-      required: false,
-      order: 3,
-    },
-  ],
-};
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetQuestionById } from "@/hooks/useGetQuestionsById";
+import { ArrowLeft, ArrowLeftCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ViewQuestionnaire() {
-  const getQuestionTypeLabel = (type: string) => {
-    switch (type) {
-      case 'multipleChoice':
-        return 'Multiple Choice';
-      case 'text':
-        return 'Text';
-      case 'number':
-        return 'Number';
-      case 'boolean':
-        return 'Yes/No';
-      case 'scale':
-        return 'Scale';
-      default:
-        return type;
-    }
+  const router = useRouter();
+  const { id } = useParams();
+  const { data, isLoading } = useGetQuestionById(Number(id));
+
+  const formatType = (type: string) => {
+    return type
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        {[...Array(2)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-64 mb-2" />
+              <Skeleton className="h-4 w-40" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground text-sm">No question found.</p>
+      </div>
+    );
+  }
+
+  const {
+    questionText,
+    description,
+    questionType,
+    isRequired,
+    options,
+    isStartingQuestion,
+    dependencyQuestion,
+    userLevel,
+    isActive,
+  } = data;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <h1 className="text-3xl font-bold text-slate-800">{questionnaire.title}</h1>
-        <Badge variant={questionnaire.status === 'published' ? 'default' : 'secondary'}>
-          {questionnaire.status === 'published' ? 'Published' : 'Draft'}
+    <div className="space-y-8">
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => router.back()}
+          className="h-8 w-8"
+        >
+          <ArrowLeftCircle className="h-5 w-5 text-slate-600" />
+          </Button>
+        <h1 className="text-2xl font-bold text-slate-900">{questionText}</h1>
+      </div>
+
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <Badge variant="secondary">{formatType(questionType)}</Badge>
+        {isRequired && <Badge variant="default">Required</Badge>}
+        {isStartingQuestion && (
+          <Badge className="bg-blue-100 text-blue-700">Starting Question</Badge>
+        )}
+        {dependencyQuestion && (
+          <Badge className="bg-yellow-100 text-yellow-800">
+            Has Dependency
+          </Badge>
+        )}
+        <Badge variant="default" className="capitalize">
+          {userLevel}
+        </Badge>
+        <Badge
+          className={
+            isActive
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-200 text-gray-600"
+          }
+        >
+          {isActive ? "Active" : "Inactive"}
         </Badge>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 text-sm">
-            <div className="grid grid-cols-[120px_1fr]">
-              <span className="text-muted-foreground font-medium">Title:</span>
-              <span>{questionnaire.title}</span>
-            </div>
-            <div className="grid grid-cols-[120px_1fr]">
-              <span className="text-muted-foreground font-medium">Description:</span>
-              <span>{questionnaire.description}</span>
-            </div>
-            <div className="grid grid-cols-[120px_1fr]">
-              <span className="text-muted-foreground font-medium">Status:</span>
-              <span>{questionnaire.status}</span>
-            </div>
-            <div className="grid grid-cols-[120px_1fr]">
-              <span className="text-muted-foreground font-medium">Created:</span>
-              <span>{new Date(questionnaire.createdAt).toLocaleString()}</span>
-            </div>
-            <div className="grid grid-cols-[120px_1fr]">
-              <span className="text-muted-foreground font-medium">Updated:</span>
-              <span>{new Date(questionnaire.updatedAt).toLocaleString()}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-slate-800">
-          Questions ({questionnaire.questions.length})
-        </h2>
-        <div className="space-y-4">
-          {questionnaire.questions.map((q) => (
-            <Card key={q.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-base font-medium">
-                      {q.order}. {q.text}
-                    </CardTitle>
-                    {q.description && (
-                      <CardDescription>{q.description}</CardDescription>
-                    )}
+      {options && options.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Answer Options</CardTitle>
+            <CardDescription>Select one option below</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {questionType === "multiple_choice_single" ? (
+              <div className="space-y-2">
+                {options.map((opt: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-2 rounded-md border border-gray-200 hover:border-primary transition"
+                  >
+                    <div className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center">
+                      <div className="h-2 w-2 bg-primary rounded-full" />
+                    </div>
+                    <span className="text-sm text-slate-700">
+                      {opt.optionText}
+                    </span>
                   </div>
-                  <div className="flex gap-2">
-                    <Badge variant="secondary">{getQuestionTypeLabel(q.type)}</Badge>
-                    {q.required && <Badge>Required</Badge>}
+                ))}
+              </div>
+            ) : questionType === "multiple_choice_multi" ? (
+              <div className="space-y-2">
+                {options.map((opt: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-2 rounded-md border border-gray-200 hover:border-primary transition"
+                  >
+                    <div className="h-4 w-4 rounded-sm border-2 border-primary flex items-center justify-center">
+                      <div className="h-2 w-2 bg-primary rounded-sm" />
+                    </div>
+                    <span className="text-sm text-slate-700">
+                      {opt.optionText}
+                    </span>
                   </div>
-                </div>
-              </CardHeader>
-              {q.options && q.options.length > 0 && (
-                <CardContent>
-                  <ul className="space-y-1 text-sm">
-                    {q.options.map((opt) => (
-                      <li key={opt.id} className="flex items-center gap-2">
-                        <span className="h-2 w-2 bg-primary rounded-full" />
-                        <span>{opt.label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              )}
-            </Card>
-          ))}
-        </div>
-      </div>
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {options.map((opt: any, index: number) => (
+                  <li
+                    key={index}
+                    className="flex items-center gap-2 p-2 rounded-md border border-gray-200 hover:border-primary transition"
+                  >
+                    <span className="h-2 w-2 bg-primary rounded-full" />
+                    <span>{opt.optionText}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

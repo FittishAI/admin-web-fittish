@@ -3,7 +3,7 @@ import { Questionnaire, User } from "@/lib/types";
 export const questionnaires: Questionnaire[] = [
   {
     id: "q1",
-    title: "Fitness Goal Assessment",
+    title: "Basic Questionnnaire",
     description: "Questionnaire to assess fitness goals and preferences",
     status: "published",
     createdAt: "2023-09-15T10:00:00Z",
@@ -63,7 +63,7 @@ export const questionnaires: Questionnaire[] = [
   },
   {
     id: "q2",
-    title: "Nutrition Assessment",
+    title: "Meal Questionnaire",
     description: "Questionnaire to understand dietary preferences and habits",
     status: "draft",
     createdAt: "2023-10-05T09:15:00Z",
@@ -102,7 +102,7 @@ export const questionnaires: Questionnaire[] = [
   },
   {
     id: "q3",
-    title: "Sleep and Recovery",
+    title: "Workout Questionnaire",
     description: "Questionnaire about sleep patterns and recovery habits",
     status: "draft",
     createdAt: "2023-11-01T15:30:00Z",
