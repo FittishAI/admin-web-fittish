@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ArrowLeftCircle, Save } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,92 +15,75 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useCreateUser } from '@/hooks/admin/useCreateUser';
 
-import { useGetUser } from '@/hooks/admin/useGetUser';
-import { useUpdateUser } from '@/hooks/admin/useUpdateUser';
+const initialForm = {
+  email: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  dateOfBirth: '',
+  height: '',
+  weight: '',
+  role: 'USER',
+  isActive: 'true',
+};
 
-export default function EditUser() {
+export default function CreateUser() {
   const router = useRouter();
-  const { id } = useParams() as { id: string };
+  const [form, setForm] = useState(initialForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: user, isLoading } = useGetUser(id);
-  const { mutate: updateUser, isPending } = useUpdateUser();
-
-  const [form, setForm] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    dateOfBirth: '',
-    height: '',
-    weight: '',
-    role: 'USER',
-    isActive: 'true',
-  });
-
-  useEffect(() => {
-    if (user) {
-      setForm({
-        email: user.email || '',
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        dateOfBirth: user.dateOfBirth?.split('T')[0] || '',
-        height: user.height?.toString() || '',
-        weight: user.weight?.toString() || '',
-        role: user.role || 'USER',
-        isActive: user.isActive ? 'true' : 'false',
-      });
-    }
-  }, [user]);
-
-  const handleChange = (key: string, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const handleChange = (key: string, value: any) => {
+    setForm({ ...form, [key]: value });
   };
 
+  const { mutate: createUser, isPending } = useCreateUser();
+
   const handleSubmit = () => {
-    updateUser(
+    if (!form.email || !form.password) {
+      toast.error('Email and password are required');
+      return;
+    }
+  
+    createUser(
       {
-        id,
-        data: {
-          email: form.email,
-          firstName: form.firstName,
-          lastName: form.lastName,
-          dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
-          height: form.height ? parseFloat(form.height) : null,
-          weight: form.weight ? parseFloat(form.weight) : null,
-          role: form.role,
-          isActive: form.isActive === 'true',
-        },
+        ...form,
+        height: form.height ? parseFloat(form.height) : null,
+        weight: form.weight ? parseFloat(form.weight) : null,
+        isActive: form.isActive === 'true',
+        dateOfBirth: form.dateOfBirth
+          ? new Date(form.dateOfBirth).toISOString()
+          : null,
       },
       {
         onSuccess: () => {
-          toast.success('User updated successfully');
-          router.push('/dashboard/users');
+          toast.success('User created successfully');
+          setTimeout(() => {
+            router.back();
+          }, 1500);
         },
         onError: (err: any) => {
-          toast.error('Failed to update user', {
-            description: err.message || 'Something went wrong',
+          toast.error('Error creating user', {
+            description: err.message || 'Unexpected error occurred',
           });
         },
       }
     );
   };
-
-  if (isLoading) {
-    return <div className="p-6 text-muted-foreground">Loading user...</div>;
-  }
-
+  
   return (
     <div className="max-w-3xl w-full mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ArrowLeftCircle className="h-5 w-5 text-muted-foreground" />
         </Button>
-        <h1 className="text-3xl font-semibold text-slate-800">Edit User</h1>
+        <h1 className="text-3xl font-semibold text-slate-800">Create User</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Edit User Details</CardTitle>
+          <CardTitle>Enter User Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,6 +94,15 @@ export default function EditUser() {
                 value={form.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="user@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={form.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                placeholder="Secure password"
               />
             </div>
             <div className="space-y-2">
@@ -154,7 +145,10 @@ export default function EditUser() {
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={form.role} onValueChange={(value) => handleChange('role', value)}>
+              <Select
+                value={form.role}
+                onValueChange={(value) => handleChange('role', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
@@ -184,11 +178,11 @@ export default function EditUser() {
           <div className="flex justify-end pt-4">
             <Button
               onClick={handleSubmit}
-              disabled={isPending}
+              disabled={isSubmitting}
               className="bg-blue-600 text-white hover:bg-blue-700"
             >
               <Save className="mr-2 h-4 w-4" />
-              {isPending ? 'Saving...' : 'Save Changes'}
+              {isSubmitting ? 'Creating...' : 'Create User'}
             </Button>
           </div>
         </CardContent>
