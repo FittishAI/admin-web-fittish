@@ -19,6 +19,8 @@ import { ArrowLeftCircle, Save, Trash2, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateQuestion } from "@/hooks/useCreateQuestion";
 import { SuggestiveQuestionSearch } from "@/components/ui/combobox";
+import SuggestiveSearch from "../resusable/SuggestiveSearch/SuggestiveSearch";
+import { fetchQuestions } from "@/lib/api/questions";
 
 const emptyQuestion = () => ({
   questionText: "",
@@ -192,9 +194,13 @@ export default function CreateQuestion() {
     <>
       <div className="space-y-2">
         <Label>{isNext ? "Next Question Text" : "Question Text"}</Label>
-        <Input
+        <SuggestiveSearch
+          categoryId={categoryMap[questionData.categoryId] || 1}
           value={q.questionText}
-          onChange={(e) => setField("questionText", e.target.value)}
+          onChange={(val) => setField("questionText", val)}
+          onSelect={(selected) => setField("questionText", selected.questionText)}
+          fetchFn={fetchQuestions}
+          isNext={isNext}
         />
       </div>
 

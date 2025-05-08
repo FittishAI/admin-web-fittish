@@ -166,6 +166,9 @@ export default function EditQuestion() {
     editQuestion(payload, {
       onSuccess: () => {
         toast.success("Question updated successfully");
+        setTimeout(() => {
+          router.back();
+        }, 1500);
       },
       onError: (err: any) => {
         toast.error("Failed to update question", {

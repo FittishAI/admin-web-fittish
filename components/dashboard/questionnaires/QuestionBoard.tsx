@@ -46,7 +46,8 @@ export default function QuestionBoard() {
 
   const normalized = (value: string) => value.toLowerCase().trim();
 
-  const filteredRaw = questions.filter((q) =>
+  const filteredRaw = questions
+  .filter((q) =>
     [
       q.id,
       q.categoryId,
@@ -58,7 +59,12 @@ export default function QuestionBoard() {
       .join(" ")
       .toLowerCase()
       .includes(normalized(search))
-  );
+  )
+  .sort((a, b) => {
+    const orderA = a.questionOrder ?? 9999;
+    const orderB = b.questionOrder ?? 9999;
+    return orderA - orderB;
+  });
 
   const { mutate: deleteQuestion, isPending } = useDeleteQuestion();
 
@@ -103,35 +109,11 @@ export default function QuestionBoard() {
     return `${prefix}-${index + 1}`;
   };
 
-  const childToParentMap = new Map<number, number>();
-  questions.forEach((q) => {
-    if (q.nextQuestion?.id) {
-      childToParentMap.set(q.nextQuestion.id, q.id);
-    }
-  });
-
-  const added = new Set<number>();
-  const sortedQuestions: typeof questions = [];
-
-  filteredRaw.forEach((parent) => {
-    if (parent.nextQuestion?.id && !added.has(parent.id)) {
-      sortedQuestions.push(parent);
-      added.add(parent.id);
-
-      const child = questions.find((q) => q.id === parent.nextQuestion?.id);
-      if (child && !added.has(child.id)) {
-        sortedQuestions.push(child);
-        added.add(child.id);
-      }
-    }
-  });
-
-  filteredRaw.forEach((q) => {
-    if (!added.has(q.id)) {
-      sortedQuestions.push(q);
-      added.add(q.id);
-    }
-  });
+  const sortedQuestions = [...filteredRaw].sort((a, b) => {
+    const orderA = a.questionOrder ?? 9999;
+    const orderB = b.questionOrder ?? 9999;
+    return orderA - orderB;
+  });  
 
   const nextQuestionMap = new Map<number, number>();
   questions.forEach((q) => {
@@ -229,7 +211,7 @@ export default function QuestionBoard() {
                   className="cursor-pointer hover:bg-blue-50 transition-colors"
                 >
                   <TableCell className="font-medium">
-                    {getPrefixedId(index, q.categoryId)}
+                    {getPrefixedId(q.questionOrder ?? index, q.categoryId)}
                   </TableCell>
                   <TableCell>
                     <span>{q.questionText}</span>
