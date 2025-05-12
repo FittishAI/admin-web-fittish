@@ -272,8 +272,8 @@ export default function CreateQuestion() {
           rows={3}
         />
       </div>
-
-      <div className="flex items-center space-x-2 pt-6">
+      <div className="flex flex-col gap-4 pt-6">
+      <div className="flex items-center space-x-2">
         <Switch
           checked={q.required}
           onCheckedChange={(val) => setField("required", val)}
@@ -283,15 +283,27 @@ export default function CreateQuestion() {
       </div>
 
       {!isNext && (
-        <div className="flex items-center space-x-2 pt-6">
-          <Switch
-            checked={q.isStartingQuestion}
-            onCheckedChange={(val) => setField("isStartingQuestion", val)}
-            className="bg-muted data-[state=checked]:bg-slate-800"
-          />
-          <Label>Is Starting Question</Label>
-        </div>
+        <>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={q.isStartingQuestion}
+              onCheckedChange={(val) => setField("isStartingQuestion", val)}
+              className="bg-muted data-[state=checked]:bg-slate-800"
+            />
+            <Label>Is Starting Question</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={q.dependencyQuestion}
+              onCheckedChange={(val) => setField("dependencyQuestion", val)}
+              className="bg-muted data-[state=checked]:bg-slate-800"
+            />
+            <Label>Dependency Question</Label>
+          </div>
+        </>
       )}
+    </div>
 
       <div className="space-y-2">
         <Label>Status</Label>
@@ -330,6 +342,7 @@ export default function CreateQuestion() {
           {renderQuestionBlock(questionData, updateQuestionField, options)}
         </CardContent>
       </Card>
+      {questionData?.dependencyQuestion && (
 
       <Card>
         <CardHeader className="flex flex-row justify-between items-center">
@@ -372,7 +385,7 @@ export default function CreateQuestion() {
           </CardContent>
         )}
       </Card>
-
+      )}
       <div className="flex items-center justify-end gap-3">
         <Button variant="outline" onClick={() => router.back()}>
           Cancel
