@@ -29,6 +29,7 @@ const emptyQuestion = () => ({
   isStartingQuestion: false,
   status: "draft",
   description: "",
+  keyword: "",
   options: [],
 });
 
@@ -64,6 +65,7 @@ export default function CreateQuestion() {
       categoryId: categoryMapping[Number(id)] || "BASIC",
       isStartingQuestion: true,
       dependencyQuestion: false,
+      keyword: "",
     });
   }, [id]);
 
@@ -154,6 +156,7 @@ export default function CreateQuestion() {
       dependencyQuestion: questionData.dependencyQuestion ?? false,
       categoryId: questionData.categoryId ?? "BASIC", // Make sure categoryId is from state
       description: questionData.description ?? "",
+      keyword: questionData.keyword,
       options,
       nextQuestion: nextQuestion
         ? {
@@ -162,6 +165,7 @@ export default function CreateQuestion() {
             required: nextQuestion.required,
             status: nextQuestion.status,
             description: nextQuestion.description ?? "",
+            keyword: nextQuestion.keyword ?? "",
             options: nextOptions,
           }
         : undefined,
@@ -184,6 +188,37 @@ export default function CreateQuestion() {
   };
 
   if (!questionData) return null;
+
+  const keywordOptions: Record<string, { label: string; value: string }[]> = {
+    BASIC: [
+      { label: "Name", value: "name" },
+      { label: "Age", value: "age" },
+      { label: "Gender", value: "gender" },
+      { label: "Weight", value: "weight" },
+      { label: "Height", value: "height" },
+      { label: "Location", value: "location" },
+    ],
+    MEAL: [
+      { label: "Dietary Preferences", value: "dietaryPreferences" },
+      { label: "Dietary Restrictions", value: "dietaryRestrictions" },
+      { label: "Allergies", value: "allergies" },
+      { label: "Favorite Cuisine", value: "favoriteCuisine" },
+      { label: "Dislike", value: "dislike" },
+      { label: "Meal Goal", value: "mealGoal" },
+    ],
+    WORKOUT: [
+      { label: "Preferred Workout Style", value: "workoutPreferences" },
+      { label: "Intensity", value: "fitnessLevel" },
+      { label: "Equipment", value: "equipment" },
+      { label: "Duration", value: "sessionDuration" },
+      { label: "Goal", value: "goal" },
+      { label: "Activity Level", value: "activity_level" },
+      { label: "Days per Week", value: "trainingDaysPerWeek" },
+      { label: "Preferred Time", value: "preferTime" },
+      { label: "Injuries", value: "injury" },
+      { label: "Health Conditons", value: "healthConditions" },
+    ],
+  };  
 
   const renderQuestionBlock = (
     q: any,
@@ -304,6 +339,7 @@ export default function CreateQuestion() {
         </>
       )}
     </div>
+    <div className="flex flex-row gap-4 pt-6">
 
       <div className="space-y-2">
         <Label>Status</Label>
@@ -319,6 +355,25 @@ export default function CreateQuestion() {
             <SelectItem value="published">Published</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="space-y-2">
+      <Label>Keyword</Label>
+      <Select
+        value={q.keyword || ""}
+        onValueChange={(val) => setField("keyword", val)}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select keyword" />
+        </SelectTrigger>
+        <SelectContent>
+          {(keywordOptions[q.categoryId] || []).map((kw) => (
+            <SelectItem key={kw.value} value={kw.value}>
+              {kw.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      </div>
       </div>
     </>
   );
@@ -364,7 +419,10 @@ export default function CreateQuestion() {
               variant="outline"
               size="sm"
               onClick={() => {
-                setNextQuestion(emptyQuestion());
+                setNextQuestion({
+                  ...emptyQuestion(),
+                  categoryId: questionData.categoryId,
+                });
                 toast.success("Next question added");
               }}
             >

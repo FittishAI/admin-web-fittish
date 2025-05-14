@@ -27,6 +27,7 @@ const emptyQuestion = () => ({
   required: false,
   status: "draft",
   description: "",
+  keyword: "",
   options: [],
 });
 
@@ -39,7 +40,6 @@ const categoryMap: Record<string, number> = {
 export default function EditQuestion() {
   const router = useRouter();
   const { id } = useParams();
-  console.log("id", id);
   const { mutate: editQuestion, isPending } = useEditQuestion();
   const { data } = useGetQuestionById(Number(id));
 
@@ -149,6 +149,7 @@ export default function EditQuestion() {
       dependencyQuestion: questionData.dependencyQuestion ?? false,
       categoryId: questionData.categoryId ?? "BASIC",
       description: questionData.description ?? "",
+      keyword: questionData.keyword ?? "",
       options,
       nextQuestion: nextQuestion
         ? {
@@ -156,6 +157,7 @@ export default function EditQuestion() {
             questionText: nextQuestion.questionText,
             questionType: nextQuestion.questionType,
             required: nextQuestion.required,
+            keyword: nextQuestion.keyword ?? "",
             status: nextQuestion.status,
             description: nextQuestion.description ?? "",
             options: nextOptions,
@@ -179,6 +181,37 @@ export default function EditQuestion() {
   };
 
   if (!questionData) return null;
+
+  const keywordOptions: Record<string, { label: string; value: string }[]> = {
+    BASIC: [
+      { label: "Name", value: "name" },
+      { label: "Age", value: "age" },
+      { label: "Gender", value: "gender" },
+      { label: "Weight", value: "weight" },
+      { label: "Height", value: "height" },
+      { label: "Location", value: "location" },
+    ],
+    MEAL: [
+      { label: "Dietary Preferences", value: "dietaryPreferences" },
+      { label: "Dietary Restrictions", value: "dietaryRestrictions" },
+      { label: "Allergies", value: "allergies" },
+      { label: "Favorite Cuisine", value: "favoriteCuisine" },
+      { label: "Dislike", value: "dislike" },
+      { label: "Meal Goal", value: "mealGoal" },
+    ],
+    WORKOUT: [
+      { label: "Preferred Workout Style", value: "workoutPreferences" },
+      { label: "Intensity", value: "fitnessLevel" },
+      { label: "Equipment", value: "equipment" },
+      { label: "Duration", value: "sessionDuration" },
+      { label: "Goal", value: "goal" },
+      { label: "Activity Level", value: "activity_level" },
+      { label: "Days per Week", value: "trainingDaysPerWeek" },
+      { label: "Preferred Time", value: "preferTime" },
+      { label: "Injuries", value: "injury" },
+      { label: "Health Conditons", value: "healthConditions" },
+    ],
+  };
 
   const renderQuestionBlock = (
     q: any,
@@ -302,7 +335,7 @@ export default function EditQuestion() {
       )}
 
       <div className="flex items-center gap-6 pt-6">
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label>User Level</Label>
           <Select
             value={q.userLevel}
@@ -317,23 +350,44 @@ export default function EditQuestion() {
               <SelectItem value="advance">Advanced</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select
-            value={q.status}
-            onValueChange={(val) => setField("status", val)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="flex flex-row gap-4 pt-6">
+
+      <div className="space-y-2">
+        <Label>Status</Label>
+        <Select
+          value={q.status}
+          onValueChange={(val) => setField("status", val)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+      <Label>Keyword</Label>
+      <Select
+        value={q.keyword || ""}
+        onValueChange={(val) => setField("keyword", val)}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select keyword" />
+        </SelectTrigger>
+        <SelectContent>
+          {(keywordOptions[q.categoryId] || []).map((kw) => (
+            <SelectItem key={kw.value} value={kw.value}>
+              {kw.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      </div>
+      </div>
       </div>
     </>
   );
@@ -377,7 +431,10 @@ export default function EditQuestion() {
               variant="outline"
               size="sm"
               onClick={() => {
-                setNextQuestion(emptyQuestion());
+                setNextQuestion({
+                  ...emptyQuestion(),
+                  categoryId: questionData.categoryId,
+                });
                 toast.success("Next question added");
               }}
             >
