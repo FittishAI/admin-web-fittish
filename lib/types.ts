@@ -85,4 +85,5 @@ export interface AdminUser {
   workoutsLogged: number;
   mealsLogged: number;
   currentStreak: number;
+  longestStreak: number;
 }

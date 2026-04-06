@@ -132,10 +132,13 @@ export default function UserManagment() {
               <TableHead rowSpan={2} className="align-middle">Role</TableHead>
               <TableHead rowSpan={2} className="align-middle">Status</TableHead>
               <TableHead rowSpan={2} className="align-middle">Onboarded</TableHead>
-              <TableHead rowSpan={2} className="align-middle">
-                <div className="flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Streak</span>
+              <TableHead
+                colSpan={2}
+                className="text-center border-l border-orange-200 bg-orange-50/60 text-orange-800 font-semibold"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <Flame className="w-3.5 h-3.5" />
+                  Streak
                 </div>
               </TableHead>
               <TableHead
@@ -152,8 +155,10 @@ export default function UserManagment() {
               </TableHead>
               <TableHead rowSpan={2} className="text-right align-middle border-l">Actions</TableHead>
             </TableRow>
-            {/* Row 2 — sub-headers for the two grouped sections */}
+            {/* Row 2 — sub-headers for all grouped sections */}
             <TableRow className="bg-muted">
+              <TableHead className="text-xs text-muted-foreground border-l border-orange-200">Current</TableHead>
+              <TableHead className="text-xs text-muted-foreground">Longest</TableHead>
               <TableHead className="text-xs text-muted-foreground border-l border-blue-200">Plan</TableHead>
               <TableHead className="text-xs text-muted-foreground">
                 <div className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />Workout</div>
@@ -173,7 +178,7 @@ export default function UserManagment() {
             {isLoading ? (
               [...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(11)].map((_, j) => (
+                  {[...Array(12)].map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -218,10 +223,17 @@ export default function UserManagment() {
                       <XCircle className="w-4 h-4 text-gray-400" />
                     )}
                   </TableCell>
-                  <TableCell>
+                  {/* Streak group */}
+                  <TableCell className="border-l border-orange-100">
                     <span className={`inline-flex items-center gap-1 font-medium ${user.currentStreak > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
                       <Flame className="w-3.5 h-3.5" />
                       {user.currentStreak}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center gap-1 font-medium ${user.longestStreak > 0 ? 'text-orange-400' : 'text-gray-400'}`}>
+                      <Flame className="w-3.5 h-3.5" />
+                      {user.longestStreak}
                     </span>
                   </TableCell>
                   {/* Plans group */}
@@ -322,7 +334,7 @@ export default function UserManagment() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={12}
+                  colSpan={13}
                   className="text-center text-muted-foreground"
                 >
                   No users found.
