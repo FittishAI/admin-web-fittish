@@ -55,3 +55,35 @@ export interface User {
   avatar?: string;
   createdAt: string;
 }
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  dateOfBirth: string | null;
+  height: string | null;
+  heightUnit: string | null;
+  weight: string | null;
+  weightUnit: string | null;
+  age: number | null;
+  gender: string | null;
+  role: string;
+  isActive: boolean;
+  subscriptionPlan: string;
+  timezone: string;
+  imageKey: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
+  deleteReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  onboardingCompleted: boolean;
+  planName: string | null;
+  workoutPlansGenerated: number;
+  mealPlansGenerated: number;
+  workoutsLogged: number;
+  mealsLogged: number;
+  currentStreak: number;
+  longestStreak: number;
+}
