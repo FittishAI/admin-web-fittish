@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Eye, Pencil, Trash2, Search, UserPlus } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, UserPlus, CheckCircle, XCircle, Dumbbell, UtensilsCrossed, Flame } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/table';
 import { useGetAllUsers } from '@/hooks/admin/useGetAllUsers';
 import { useDeleteUser } from '@/hooks/admin/useDeleteUser';
+import { AdminUser } from '@/lib/types';
 
 const getRoleBadge = (role?: string) => {
   const safeRole = role || 'user';
@@ -45,6 +46,26 @@ const getRoleBadge = (role?: string) => {
   );
 };
 
+const getPlanBadge = (planName?: string | null) => {
+  const plan = planName ?? 'FREE';
+  const upper = plan.toUpperCase();
+  const variant =
+    upper === 'PREMIUM'
+      ? 'bg-amber-100 text-amber-700'
+      : upper === 'FREE'
+      ? 'bg-sky-100 text-sky-700'
+      : 'bg-gray-100 text-gray-600';
+  return (
+    <span className={`px-2 py-1 rounded text-xs font-medium ${variant}`}>
+      {plan}
+    </span>
+  );
+};
+
+const StatCell = ({ value }: { value: number }) => (
+  <span className="font-medium text-slate-700">{value}</span>
+);
+
 export default function UserManagment() {
   const router = useRouter();
   const [search, setSearch] = useState('');
@@ -53,7 +74,7 @@ export default function UserManagment() {
   const { data: users = [], isLoading } = useGetAllUsers();
   const { mutate: deleteUser } = useDeleteUser();
 
-  const filtered = users.filter((user: any) =>
+  const filtered = (users as AdminUser[]).filter((user) =>
     [user.email, user.firstName, user.lastName, user.role]
       .join(' ')
       .toLowerCase()
@@ -104,19 +125,55 @@ export default function UserManagment() {
       <div className="rounded-md border border-gray-200 shadow-sm">
         <Table>
           <TableHeader>
+            {/* Row 1 — top-level headers; grouped columns use colSpan, fixed columns use rowSpan */}
             <TableRow className="bg-muted">
-              <TableHead className="w-[160px]">Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead rowSpan={2} className="w-[150px] align-middle">Name</TableHead>
+              <TableHead rowSpan={2} className="align-middle">Email</TableHead>
+              <TableHead rowSpan={2} className="align-middle">Role</TableHead>
+              <TableHead rowSpan={2} className="align-middle">Status</TableHead>
+              <TableHead rowSpan={2} className="align-middle">Onboarded</TableHead>
+              <TableHead rowSpan={2} className="align-middle">
+                <div className="flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Streak</span>
+                </div>
+              </TableHead>
+              <TableHead
+                colSpan={3}
+                className="text-center border-l border-blue-200 bg-blue-50/60 text-blue-800 font-semibold"
+              >
+                Plans
+              </TableHead>
+              <TableHead
+                colSpan={2}
+                className="text-center border-l border-green-200 bg-green-50/60 text-green-800 font-semibold"
+              >
+                Logged
+              </TableHead>
+              <TableHead rowSpan={2} className="text-right align-middle border-l">Actions</TableHead>
+            </TableRow>
+            {/* Row 2 — sub-headers for the two grouped sections */}
+            <TableRow className="bg-muted">
+              <TableHead className="text-xs text-muted-foreground border-l border-blue-200">Plan</TableHead>
+              <TableHead className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />Workout</div>
+              </TableHead>
+              <TableHead className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-1"><UtensilsCrossed className="w-3 h-3" />Meal</div>
+              </TableHead>
+              <TableHead className="text-xs text-muted-foreground border-l border-green-200">
+                <div className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />Workout</div>
+              </TableHead>
+              <TableHead className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-1"><UtensilsCrossed className="w-3 h-3" />Meal</div>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               [...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(4)].map((_, j) => (
+                  {[...Array(11)].map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -130,15 +187,15 @@ export default function UserManagment() {
                 </TableRow>
               ))
             ) : filtered.length > 0 ? (
-              filtered.map((user: any) => (
+              filtered.map((user) => (
                 <TableRow
                   key={user.id}
                   onClick={() =>
                     router.push(`/dashboard/users/${user.id}/view`)
                   }
                   className="cursor-pointer hover:bg-blue-50 transition-colors"
-                >                  
-                <TableCell>
+                >
+                  <TableCell>
                     {user.firstName} {user.lastName}
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -154,14 +211,42 @@ export default function UserManagment() {
                       {user.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
+                    {user.onboardingCompleted ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-gray-400" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center gap-1 font-medium ${user.currentStreak > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
+                      <Flame className="w-3.5 h-3.5" />
+                      {user.currentStreak}
+                    </span>
+                  </TableCell>
+                  {/* Plans group */}
+                  <TableCell className="border-l border-blue-100">{getPlanBadge(user.planName)}</TableCell>
+                  <TableCell>
+                    <StatCell value={user.workoutPlansGenerated} />
+                  </TableCell>
+                  <TableCell>
+                    <StatCell value={user.mealPlansGenerated} />
+                  </TableCell>
+                  {/* Logged group */}
+                  <TableCell className="border-l border-green-100">
+                    <StatCell value={user.workoutsLogged} />
+                  </TableCell>
+                  <TableCell>
+                    <StatCell value={user.mealsLogged} />
+                  </TableCell>
+                  <TableCell className="text-right border-l">
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/dashboard/users/${user.id}/view`)
+                          router.push(`/dashboard/users/${user.id}/view`);
                         }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
@@ -172,16 +257,16 @@ export default function UserManagment() {
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/dashboard/users/${user.id}/edit`)
+                          router.push(`/dashboard/users/${user.id}/edit`);
                         }}
                       >
                         <Pencil className="w-4 h-4 mr-1" />
                         Edit
                       </Button>
                       <Dialog
-                        open={openDialogId === user.id}
+                        open={openDialogId === String(user.id)}
                         onOpenChange={(open) =>
-                          setOpenDialogId(open ? user.id : null)
+                          setOpenDialogId(open ? String(user.id) : null)
                         }
                       >
                         <DialogTrigger asChild>
@@ -220,7 +305,7 @@ export default function UserManagment() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(
-                                  user.id,
+                                  String(user.id),
                                   `${user.firstName} ${user.lastName}`
                                 );
                               }}
@@ -237,7 +322,7 @@ export default function UserManagment() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={12}
                   className="text-center text-muted-foreground"
                 >
                   No users found.
