@@ -1,1 +1,1 @@
-export const API_URL = `https://api.fittish.ai`;
+export const API_URL = `https://prod-api.fittish.ai`;
