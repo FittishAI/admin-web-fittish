@@ -1,12 +1,17 @@
 import { API_URL } from "@/constants";
 import { useAuthStore } from "@/lib/store/authSlice";
 import { useMutation } from "@tanstack/react-query";
+import { getDeviceId } from "@/lib/utils";
 
 const loginUser = async ({ email, password }: { email: string; password: string }) => {
   const res = await fetch(`${API_URL}/auth/signin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ 
+      email, 
+      password,
+      deviceId: getDeviceId() 
+    }),
   });
 
   if (!res.ok) throw new Error("Login failed");
