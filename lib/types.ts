@@ -156,23 +156,39 @@ export interface OpenAiCostLineItem {
   currency: string;
 }
 
+export interface OpenAiCurrencyTotal {
+  currency: string;
+  amount: number;
+}
+
 export interface OpenAiCostBucket {
   /** ISO-8601, inclusive. */
   startTime: string;
   /** ISO-8601, exclusive. */
   endTime: string;
-  amount: number;
+  /** Per-currency subtotals. Never a cross-currency sum. */
+  totalsByCurrency: OpenAiCurrencyTotal[];
   lineItems: OpenAiCostLineItem[];
 }
 
 export interface OpenAiCostsResult {
   from: string;
   to: string;
-  currency: string;
-  /** Sum of every bucket across every page OpenAI returned. */
-  totalAmount: number;
+
+  /** One entry per currency OpenAI reported. Always present. */
+  totalsByCurrency: OpenAiCurrencyTotal[];
+
+  /** The single currency in play, or null when OpenAI returned several. */
+  currency: string | null;
+
+  /**
+   * Total for `currency`, or null when several currencies were returned.
+   * Null means "cannot be one number", NOT zero — render totalsByCurrency.
+   */
+  totalAmount: number | null;
+
   buckets: OpenAiCostBucket[];
   bucketCount: number;
-  /** Pages fetched to build this result — surfaced for pagination confidence. */
+  /** Pages fetched — surfaced for pagination confidence. */
   pagesFetched: number;
 }

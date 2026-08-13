@@ -3,21 +3,25 @@ import { apiJson } from '@/lib/api/client';
 import { OpenAiCostsResult } from '@/lib/types';
 
 export interface OpenAiCostsFilters {
-  /** ISO date, e.g. "2026-08-01". Defaults server-side to 30 days ago. */
+  /** Local calendar date `YYYY-MM-DD`; the API reads it as a whole UTC day. */
   from?: string;
   to?: string;
   groupByLineItem?: boolean;
   groupByProject?: boolean;
 }
 
-
-export function useGetOpenAiCosts(filters: OpenAiCostsFilters = {}) {
+export function useGetOpenAiCosts(
+  filters: OpenAiCostsFilters = {},
+  enabled = true
+) {
   return useQuery<OpenAiCostsResult>({
     queryKey: ['admin-openai-costs', filters],
+    enabled,
     placeholderData: keepPreviousData,
     // OpenAI aggregates billing on a delay, so refetching aggressively spends
     // rate limit on data that cannot have changed.
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: false,
     queryFn: () => {
       const params = new URLSearchParams();
