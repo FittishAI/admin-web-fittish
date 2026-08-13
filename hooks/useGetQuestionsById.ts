@@ -1,20 +1,11 @@
-import { API_URL } from "@/constants";
 import { useQuery } from "@tanstack/react-query";
+import { apiJson } from "@/lib/api/client";
 
-const fetchQuestionById = async (id: number) => {
-  const res = await fetch(`${API_URL}/questions/view`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id }),
-  });
-
-  if (!res.ok) {
-    const errorBody = await res.json();
-    throw new Error(errorBody.message || "Failed to fetch question");
-  }
-
-  return res.json();
-};
+// `any` preserves the previous `res.json()` contract — see useGetAllUsers.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const fetchQuestionById = (id: number) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  apiJson<any>("/questions/view", { method: "POST", json: { id } }, "Failed to fetch question");
 
 export function useGetQuestionById(id: number) {
   return useQuery({

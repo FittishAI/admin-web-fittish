@@ -1,13 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_URL } from '@/constants';
+import { apiJson } from '@/lib/api/client';
 
 export function useGetAllUsers() {
   return useQuery({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn: () => apiJson<any>('/admin/users', {}, 'Failed to fetch users'),
     queryKey: ['admin-users'],
-    queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/users`);
-      if (!res.ok) throw new Error('Failed to fetch users');
-      return res.json();
-    },
   });
 }

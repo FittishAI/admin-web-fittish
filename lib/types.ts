@@ -1,10 +1,10 @@
 // Questionnaire Types
 
-export type QuestionType = 
-  | "multipleChoice" 
-  | "text" 
-  | "number" 
-  | "boolean" 
+export type QuestionType =
+  | "multipleChoice"
+  | "text"
+  | "number"
+  | "boolean"
   | "scale";
 
 export interface Option {
@@ -12,7 +12,7 @@ export interface Option {
   optionText: string;
   optionOrder?: number;
   nextQuestionId?: number;
-}  
+}
 
 export interface Question {
   id: number;
@@ -143,4 +143,43 @@ export interface TokenUsageFilters {
   to?: string;
   offset: number;
   limit: number;
+}
+
+export interface OpenAiCostLineItem {
+  lineItem: string | null;
+  projectId: string | null;
+  amountUsd: number;
+}
+
+export interface OpenAiCostBucket {
+  startTime: string;
+  endTime: string;
+  amountUsd: number;
+  lineItems: OpenAiCostLineItem[];
+}
+
+export interface OpenAiCostsActual {
+  from: string;
+  to: string;
+  currency: string;
+  totalUsd: number;
+  buckets: OpenAiCostBucket[];
+  truncated: boolean;
+}
+
+export interface OpenAiCostsEstimated {
+  costUsd: number;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cachedInputTokens: number;
+  unpricedRequests: number;
+}
+
+export interface OpenAiCostsReconciliation {
+  actual: OpenAiCostsActual;
+  estimated: OpenAiCostsEstimated;
+  varianceUsd: number;
+  coverage: number | null;
+  caveats: string[];
 }

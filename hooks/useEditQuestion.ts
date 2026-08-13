@@ -1,5 +1,5 @@
-import { API_URL } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiJson } from "@/lib/api/client";
 
 interface EditQuestionPayload {
   id: number;
@@ -14,20 +14,8 @@ interface EditQuestionPayload {
   options: { optionText: string }[];
 }
 
-const editQuestion = async (data: EditQuestionPayload) => {
-  const res = await fetch(`${API_URL}/questions/edit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Failed to update question");
-  }
-
-  return res.json();
-};
+const editQuestion = (data: EditQuestionPayload) =>
+  apiJson<unknown>("/questions/edit", { method: "POST", json: data }, "Failed to update question");
 
 export function useEditQuestion() {
   const queryClient = useQueryClient();

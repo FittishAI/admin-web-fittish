@@ -1,14 +1,11 @@
-import { API_URL } from "@/constants";
+import { apiJson } from "@/lib/api/client";
 import { Question } from "../types";
 
 export async function fetchQuestions(categoryId: number): Promise<Question[]> {
-  const res = await fetch(`${API_URL}/questions?categoryId=${categoryId}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-    },
-  });
-
-  if (!res.ok) throw new Error("Failed to fetch questions");
-  return res.json();
+  // Auth header and 401/refresh handling come from the central client.
+  return apiJson<Question[]>(
+    `/questions?categoryId=${categoryId}`,
+    {},
+    "Failed to fetch questions"
+  );
 }

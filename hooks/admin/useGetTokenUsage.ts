@@ -1,7 +1,6 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { API_URL } from '@/constants';
+import { apiJson } from '@/lib/api/client';
 import { TokenUsageFilters, TokenUsageResponse } from '@/lib/types';
-
 
 const startOfLocalDay = (date: string): string =>
   new Date(`${date}T00:00:00.000`).toISOString();
@@ -13,7 +12,7 @@ export function useGetTokenUsage(filters: TokenUsageFilters) {
   return useQuery<TokenUsageResponse>({
     queryKey: ['admin-token-usage', filters],
     placeholderData: keepPreviousData,
-    queryFn: async () => {
+    queryFn: () => {
       const params = new URLSearchParams();
       params.set('offset', String(filters.offset));
       params.set('limit', String(filters.limit));
@@ -22,9 +21,11 @@ export function useGetTokenUsage(filters: TokenUsageFilters) {
       if (filters.from) params.set('from', startOfLocalDay(filters.from));
       if (filters.to) params.set('to', endOfLocalDay(filters.to));
 
-      const res = await fetch(`${API_URL}/admin/token-usage?${params.toString()}`);
-      if (!res.ok) throw new Error('Failed to fetch token usage');
-      return res.json();
+      return apiJson<TokenUsageResponse>(
+        `/admin/token-usage?${params.toString()}`,
+        {},
+        'Failed to fetch token usage'
+      );
     },
   });
 }
