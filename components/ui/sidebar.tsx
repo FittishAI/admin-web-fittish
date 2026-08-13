@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, List, Users, Star, Clock, Settings } from 'lucide-react';
+import { Home, List, Users, Star, Clock, Settings, Coins } from 'lucide-react';
 import FittishLogo from '@/assets/icons/FittishLogo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -9,6 +9,7 @@ const mainNav = [
   { label: 'Dashboard', href: '/dashboard', icon: Home },
   { label: 'Questionnaires', href: '/dashboard/questionnaires', icon: List },
   { label: 'Users', href: '/dashboard/users', icon: Users },
+  { label: 'Token Usage', href: '/dashboard/token-usage', icon: Coins },
 ];
 
 const workspaceNav = [
