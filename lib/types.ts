@@ -114,18 +114,20 @@ export interface TokenUsageRow {
   cachedInputTokens: number;
   /** Subset of outputTokens; explains large output on reasoning models. */
   reasoningTokens: number;
+  /** null = model has no listed price. Render as "—", NEVER as $0.00. */
+  costUsd: number | null;
 }
 
-/**
- * Token counts only — no money. Cost is never derived from these numbers.
- * The only cost figure in the product is OpenAI's own, shown by OpenAiCostsCard.
- */
 export interface TokenUsageTotals {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
   requests: number;
   cachedInputTokens: number;
+  /** Sum over PRICED rows only — read with `unpricedRequests`. */
+  costUsd: number;
+  /** >0 means the cost shown is a floor, not the full bill. */
+  unpricedRequests: number;
 }
 
 export interface TokenUsageResponse {
@@ -141,54 +143,4 @@ export interface TokenUsageFilters {
   to?: string;
   offset: number;
   limit: number;
-}
-
-// Actual OpenAI organisation cost, straight from OpenAI's Costs API via our
-// backend. Every amount below is a value OpenAI returned — nothing is computed
-// from tokens or a rate card on either side.
-
-export interface OpenAiCostLineItem {
-  /** e.g. "gpt-5.1, input". Null when the response is not grouped. */
-  lineItem: string | null;
-  /** Present only when grouped by project. */
-  projectId: string | null;
-  amount: number;
-  currency: string;
-}
-
-export interface OpenAiCurrencyTotal {
-  currency: string;
-  amount: number;
-}
-
-export interface OpenAiCostBucket {
-  /** ISO-8601, inclusive. */
-  startTime: string;
-  /** ISO-8601, exclusive. */
-  endTime: string;
-  /** Per-currency subtotals. Never a cross-currency sum. */
-  totalsByCurrency: OpenAiCurrencyTotal[];
-  lineItems: OpenAiCostLineItem[];
-}
-
-export interface OpenAiCostsResult {
-  from: string;
-  to: string;
-
-  /** One entry per currency OpenAI reported. Always present. */
-  totalsByCurrency: OpenAiCurrencyTotal[];
-
-  /** The single currency in play, or null when OpenAI returned several. */
-  currency: string | null;
-
-  /**
-   * Total for `currency`, or null when several currencies were returned.
-   * Null means "cannot be one number", NOT zero — render totalsByCurrency.
-   */
-  totalAmount: number | null;
-
-  buckets: OpenAiCostBucket[];
-  bucketCount: number;
-  /** Pages fetched — surfaced for pagination confidence. */
-  pagesFetched: number;
 }
