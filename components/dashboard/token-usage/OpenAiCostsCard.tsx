@@ -49,10 +49,9 @@ const dayLabel = (iso: string): string =>
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    timeZone: 'UTC', // buckets are UTC days; render them as such
+    timeZone: 'UTC',
   });
 
-/** Rolls line items up across every bucket, keeping currencies separate. */
 function rollUpLineItems(data: OpenAiCostsResult) {
   const totals = new Map<string, { amount: number; currency: string }>();
 
@@ -110,8 +109,14 @@ export default function OpenAiCostsCard() {
     datesValid
   );
 
-  const notConfigured = error instanceof ApiError && error.status === 503;
+  // 503 covers three DIFFERENT server states — key missing, key rejected by
+  // OpenAI, or OpenAI rate-limiting. Collapsing them all into "not configured"
+  // sends the operator to fix the wrong thing, so the backend's own message is
+  // shown verbatim and only the missing-key case gets the setup hint.
+  const unavailable = error instanceof ApiError && error.status === 503;
   const badRequest = error instanceof ApiError && error.status === 400;
+  const serverMessage = error instanceof Error ? error.message : '';
+  const keyMissing = unavailable && /not configured/i.test(serverMessage);
 
   const lineItems = useMemo(() => (data ? rollUpLineItems(data) : []), [data]);
   const nonEmptyBuckets = useMemo(
@@ -192,12 +197,19 @@ export default function OpenAiCostsCard() {
 
         {datesValid && isLoading && <Skeleton className="h-28 w-full" />}
 
-        {datesValid && !isLoading && notConfigured && (
-          <p className="text-sm text-muted-foreground">
-            Not configured. Set <code className="font-mono">OPENAI_ADMIN_KEY</code>{' '}
-            on the API — an Admin key from Organization → Admin keys; a standard
-            API key will not work.
-          </p>
+        {datesValid && !isLoading && unavailable && (
+          <div className="text-sm text-amber-800 bg-amber-50 rounded-md px-3 py-2 space-y-1">
+            <p>{serverMessage || 'OpenAI cost reporting is unavailable.'}</p>
+            {keyMissing && (
+              <p className="text-xs">
+                Set <code className="font-mono">OPENAI_ADMIN_KEY</code> in the{' '}
+                <strong>server</strong> environment — a local{' '}
+                <code className="font-mono">.env</code> is not deployed. It must
+                be an Admin key (Organization → Admin keys); a standard{' '}
+                <code className="font-mono">sk-proj-</code> key is rejected.
+              </p>
+            )}
+          </div>
         )}
 
         {datesValid && !isLoading && badRequest && (
@@ -206,7 +218,7 @@ export default function OpenAiCostsCard() {
           </p>
         )}
 
-        {datesValid && !isLoading && error && !notConfigured && !badRequest && (
+        {datesValid && !isLoading && error && !unavailable && !badRequest && (
           <p className="text-sm text-red-600">
             {error instanceof Error
               ? error.message
