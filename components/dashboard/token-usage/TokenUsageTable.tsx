@@ -7,7 +7,6 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Hash,
-  DollarSign,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,7 +38,7 @@ import {
 const PAGE_SIZE = 20;
 const ALL_ACTIONS = 'ALL';
 
-const COLUMN_COUNT = 8;
+const COLUMN_COUNT = 7;
 
 /** WORKOUT_PLAN → "Workout Plan" */
 const prettyAction = (action: string) =>
@@ -60,13 +59,6 @@ const ACTION_STYLES: Record<string, string> = {
 };
 
 const num = (n: number) => n.toLocaleString();
-
-const usd = (n: number | null): string => {
-  if (n === null) return '—';
-  if (n === 0) return '$0.00';
-  if (n < 0.01) return `$${n.toFixed(4)}`;
-  return `$${n.toFixed(2)}`;
-};
 
 const compact = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
@@ -152,35 +144,12 @@ export default function TokenUsageTable() {
       <div>
         <h2 className="text-2xl font-semibold text-slate-900">Token Usage</h2>
         <p className="text-sm text-muted-foreground">
-          GPT token consumption and estimated spend per user, action and model.
-          Cost uses OpenAI list prices, with cached input billed at its cheaper
-          rate.
+          GPT token consumption per user, action and model. Spend is not derived
+          from these counts — see Actual OpenAI Cost above for billed amounts.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="h-full">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="w-4 h-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Estimated Cost</p>
-            </div>
-            {isLoading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <div className="text-2xl font-bold text-emerald-700">
-                {usd(totals?.costUsd ?? 0)}
-              </div>
-            )}
-            {/* A partial total must never be presented as the whole bill. */}
-            {!isLoading && (totals?.unpricedRequests ?? 0) > 0 && (
-              <p className="text-xs text-amber-600 mt-1">
-                excludes {num(totals!.unpricedRequests)} request
-                {totals!.unpricedRequests === 1 ? '' : 's'} with no listed price
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Input Tokens"
           value={totals?.inputTokens ?? 0}
@@ -299,7 +268,6 @@ export default function TokenUsageTable() {
               <TableHead className="text-right">Input Tokens</TableHead>
               <TableHead className="text-right">Output Tokens</TableHead>
               <TableHead className="text-right">Total Tokens</TableHead>
-              <TableHead className="text-right">Est. Cost</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -380,18 +348,6 @@ export default function TokenUsageTable() {
                   </TableCell>
                   <TableCell className="text-right tabular-nums font-semibold">
                     {num(row.totalTokens)}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right tabular-nums font-semibold ${
-                      row.costUsd === null ? 'text-muted-foreground' : ''
-                    }`}
-                    title={
-                      row.costUsd === null
-                        ? 'No listed price for this model — cost unknown, not zero'
-                        : undefined
-                    }
-                  >
-                    {usd(row.costUsd)}
                   </TableCell>
                 </TableRow>
               ))

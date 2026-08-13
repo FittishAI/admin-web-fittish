@@ -1,13 +1,22 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertTriangle, CloudDownload, Info } from 'lucide-react';
+import { CloudDownload } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useGetOpenAiCosts } from '@/hooks/admin/useGetOpenAiCosts';
 import { ApiError } from '@/lib/api/client';
+import type { OpenAiCostsResult } from '@/lib/types';
 
 const RANGES = [
   { label: '7d', days: 7 },
@@ -15,11 +24,28 @@ const RANGES = [
   { label: '90d', days: 90 },
 ] as const;
 
-function usd(n: number): string {
-  if (n === 0) return '$0.00';
-  if (Math.abs(n) < 0.01) return `$${n.toFixed(4)}`;
-  return `$${n.toFixed(2)}`;
+function money(amount: number, currency: string): string {
+  const code = (currency || 'usd').toUpperCase();
+  const digits = amount !== 0 && Math.abs(amount) < 0.01 ? 4 : 2;
+
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: code,
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(digits)} ${code}`;
+  }
 }
+
+const day = (iso: string): string =>
+  new Date(iso).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
 function isoDaysAgo(days: number): string {
   const d = new Date();
@@ -27,28 +53,60 @@ function isoDaysAgo(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function rollUpLineItems(data: OpenAiCostsResult) {
+  const totals = new Map<string, number>();
+
+  for (const bucket of data.buckets) {
+    for (const item of bucket.lineItems) {
+      const key = item.lineItem ?? item.projectId ?? 'Uncategorised';
+      totals.set(key, (totals.get(key) ?? 0) + item.amount);
+    }
+  }
+
+  return [...totals.entries()]
+    .map(([label, amount]) => ({ label, amount }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
 export default function OpenAiCostsCard() {
   const [days, setDays] = useState<number>(30);
+  const [breakdown, setBreakdown] = useState(true);
 
   const filters = useMemo(
-    () => ({ from: isoDaysAgo(days), to: new Date().toISOString().slice(0, 10) }),
-    [days]
+    () => ({
+      from: isoDaysAgo(days),
+      to: new Date().toISOString().slice(0, 10),
+      groupByLineItem: breakdown,
+    }),
+    [days, breakdown]
   );
 
   const { data, isLoading, error } = useGetOpenAiCosts(filters);
 
+  // 503 = the server has no OPENAI_ADMIN_KEY. That is a configuration state,
+  // not a failure, so it gets instructions rather than a red error.
   const notConfigured = error instanceof ApiError && error.status === 503;
+  const badRequest = error instanceof ApiError && error.status === 400;
+
+  const lineItems = useMemo(() => (data ? rollUpLineItems(data) : []), [data]);
+  const nonEmptyBuckets = useMemo(
+    () => data?.buckets.filter((b) => b.amount !== 0) ?? [],
+    [data]
+  );
 
   return (
     <Card className="mb-6">
       <CardContent className="p-4 space-y-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <CloudDownload className="w-4 h-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">OpenAI billed cost</h3>
-            <span className="text-xs text-muted-foreground">
-              actual organisation spend
-            </span>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2">
+              <CloudDownload className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">Actual OpenAI Cost</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Billed amounts reported by OpenAI&apos;s Costs API. Not calculated
+              from tokens.
+            </p>
           </div>
 
           <div className="flex gap-1">
@@ -65,81 +123,116 @@ export default function OpenAiCostsCard() {
           </div>
         </div>
 
-        {isLoading && <Skeleton className="h-24 w-full" />}
+        {isLoading && <Skeleton className="h-28 w-full" />}
 
         {!isLoading && notConfigured && (
           <p className="text-sm text-muted-foreground">
             Not configured. Set <code className="font-mono">OPENAI_ADMIN_KEY</code>{' '}
-            on the API (Organization → Admin keys — a standard API key will not
-            work) to show what OpenAI actually billed.
+            on the API — an Admin key from Organization → Admin keys; a standard
+            API key will not work.
           </p>
         )}
 
-        {!isLoading && error && !notConfigured && (
+        {!isLoading && badRequest && (
+          <p className="text-sm text-amber-700 bg-amber-50 rounded-md px-3 py-2">
+            {error instanceof Error ? error.message : 'Invalid date range.'}
+          </p>
+        )}
+
+        {!isLoading && error && !notConfigured && !badRequest && (
           <p className="text-sm text-red-600">
-            {error instanceof Error ? error.message : 'Could not load OpenAI costs.'}
+            {error instanceof Error
+              ? error.message
+              : 'Could not load OpenAI costs.'}
           </p>
         )}
 
-        {!isLoading && data && (
+        {!isLoading && !error && data && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-end justify-between gap-4 flex-wrap">
               <div>
-                <p className="text-xs text-muted-foreground">OpenAI billed</p>
-                <p className="text-2xl font-semibold">{usd(data.actual.totalUsd)}</p>
-                <p className="text-xs text-muted-foreground uppercase">
-                  {data.actual.currency}
+                <p className="text-3xl font-semibold">
+                  {money(data.totalAmount, data.currency)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {day(data.from)} — {day(data.to)} ·{' '}
+                  <span className="uppercase">{data.currency}</span> ·{' '}
+                  {data.bucketCount} day{data.bucketCount === 1 ? '' : 's'}
+                  {data.pagesFetched > 1 && ` · ${data.pagesFetched} pages`}
                 </p>
               </div>
 
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Our estimate (tokens × rates)
-                </p>
-                <p className="text-2xl font-semibold">{usd(data.estimated.costUsd)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {data.estimated.requests} tracked request
-                  {data.estimated.requests === 1 ? '' : 's'}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-muted-foreground">Difference</p>
-                <p
-                  className={`text-2xl font-semibold ${data.varianceUsd < 0 ? 'text-red-600' : ''
-                    }`}
-                >
-                  {usd(data.varianceUsd)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {data.coverage === null
-                    ? 'no billed spend in range'
-                    : `estimate covers ${(data.coverage * 100).toFixed(1)}% of the bill`}
-                </p>
-              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setBreakdown((v) => !v)}
+              >
+                {breakdown ? 'Hide breakdown' : 'Show breakdown'}
+              </Button>
             </div>
 
-            {data.varianceUsd < 0 && (
-              <p className="flex items-start gap-2 text-sm text-red-700 bg-red-50 rounded-md px-3 py-2">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                Our estimate is higher than OpenAI actually billed — the rate card
-                is out of date. Correct it with{' '}
-                <code className="font-mono">OPENAI_MODEL_RATES</code>.
+            {data.totalAmount === 0 && nonEmptyBuckets.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                OpenAI reported no spend in this period.
               </p>
             )}
 
-            {data.caveats.length > 0 && (
-              <ul className="space-y-1">
-                {data.caveats.map((c) => (
-                  <li
-                    key={c}
-                    className="flex items-start gap-2 text-xs text-muted-foreground"
-                  >
-                    <Info className="w-3 h-3 mt-0.5 shrink-0" />
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
+            {breakdown && lineItems.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  By line item
+                </p>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Line item</TableHead>
+                        <TableHead className="text-right">Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lineItems.map((item) => (
+                        <TableRow key={item.label}>
+                          <TableCell className="font-mono text-xs">
+                            {item.label}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {money(item.amount, data.currency)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            {breakdown && nonEmptyBuckets.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  By day
+                </p>
+                <div className="overflow-x-auto max-h-72 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {nonEmptyBuckets.map((bucket) => (
+                        <TableRow key={bucket.startTime}>
+                          <TableCell>{day(bucket.startTime)}</TableCell>
+                          <TableCell className="text-right">
+                            {money(bucket.amount, data.currency)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             )}
           </>
         )}
