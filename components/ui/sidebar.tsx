@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, List, Users, Star, Clock, Settings } from 'lucide-react';
+import { Home, List, Users, Star, Clock, Settings, Coins } from 'lucide-react';
 import FittishLogo from '@/assets/icons/FittishLogo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useAuthStore } from '@/lib/store/authSlice';
 
 const mainNav = [
   { label: 'Dashboard', href: '/dashboard', icon: Home },
   { label: 'Questionnaires', href: '/dashboard/questionnaires', icon: List },
   { label: 'Users', href: '/dashboard/users', icon: Users },
+  { label: 'Token Usage', href: '/dashboard/token-usage', icon: Coins },
 ];
 
 const workspaceNav = [
@@ -18,6 +20,8 @@ const workspaceNav = [
 ];
 
 export default function Sidebar() {
+  const user = useAuthStore((s) => s.user);
+
   return (
     <aside className="md:flex h-screen w-64 flex-col justify-between border-r bg-white px-4 py-6 font-sans text-sm font-medium">
       {/* Top */}
@@ -66,8 +70,10 @@ export default function Sidebar() {
             <AvatarFallback><FittishLogo width={24} height={24} /></AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-medium">admin@fittish.com</span>
-            <span className="text-xs text-muted-foreground">Admin</span>
+            <span className="font-medium">{user?.email ?? '—'}</span>
+            <span className="text-xs text-muted-foreground">
+              {user?.role ?? '—'}
+            </span>
           </div>
         </div>
       </div>

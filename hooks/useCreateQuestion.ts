@@ -1,5 +1,5 @@
-import { API_URL } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiJson } from "@/lib/api/client";
 
 interface CreateQuestionPayload {
   categoryId: string;
@@ -26,20 +26,8 @@ interface CreateQuestionPayload {
   };
 }
 
-const createQuestion = async (data: CreateQuestionPayload) => {
-  const res = await fetch(`${API_URL}/questions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Failed to create question");
-  }
-
-  return res.json();
-};
+const createQuestion = (data: CreateQuestionPayload) =>
+  apiJson<unknown>("/questions", { method: "POST", json: data }, "Failed to create question");
 
 export function useCreateQuestion() {
   const queryClient = useQueryClient();

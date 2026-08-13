@@ -11,20 +11,23 @@ import { useLogin } from "@/hooks/useLogin";
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const login = useLogin();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     login.mutate(
       { email, password },
       {
         onSuccess: () => {
+          setPassword("");
           router.push("/dashboard");
         },
         onError: (err) => {
-          alert("Invalid credentials");
-          console.error("Login error:", err);
+          setError(err instanceof Error ? err.message : "Sign in failed");
         },
       }
     );
@@ -53,6 +56,7 @@ export default function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@fittish.com"
+              autoComplete="username"
               required
             />
           </div>
@@ -63,12 +67,22 @@ export default function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
             />
             <div className="text-right font-Inter text-semibold text-sm text-blue-600 mt-1 cursor-pointer">
               Forgot password?
             </div>
           </div>
+
+          {error && (
+            <p
+              role="alert"
+              className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {error}
+            </p>
+          )}
 
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending ? "Signing in..." : "Sign in"}

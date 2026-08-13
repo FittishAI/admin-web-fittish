@@ -1,20 +1,8 @@
-import { API_URL } from "@/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiJson } from "@/lib/api/client";
 
 const deleteQuestion = async (id: number) => {
-  const res = await fetch(`${API_URL}/questions`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ id }),
-  });
-
-  if (!res.ok) {
-    const errorBody = await res.json();
-    throw new Error(errorBody.message || "Failed to delete question");
-  }
-
+  await apiJson<void>("/questions", { method: "DELETE", json: { id } }, "Failed to delete question");
   return true;
 };
 
