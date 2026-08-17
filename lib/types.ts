@@ -47,15 +47,6 @@ export type Category = "BASIC" | "MEAL" | "WORKOUT";
 export type QuestionStatus = "Active" | "Inactive";
 
 // User Types
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "user";
-  avatar?: string;
-  createdAt: string;
-}
-
 export interface AdminUser {
   id: number;
   email: string;
@@ -79,6 +70,9 @@ export interface AdminUser {
   createdAt: string;
   updatedAt: string;
   onboardingCompleted: boolean;
+  /** Tutorial screens done / total. Optional: absent on an older backend. */
+  walkthroughCompleted?: number;
+  walkthroughTotal?: number;
   planName: string | null;
   workoutPlansGenerated: number;
   mealPlansGenerated: number;
@@ -133,6 +127,37 @@ export interface TokenUsageTotals {
 export interface TokenUsageResponse {
   totals: TokenUsageTotals;
   items: TokenUsageRow[];
+  total: number;
+}
+
+// Admin dashboard — real aggregates from GET /admin/dashboard-stats.
+
+export interface DashboardStats {
+  totals: {
+    users: number;
+    activeUsers7d: number;
+    onboarded: number;
+    newThisWeek: number;
+  };
+  signupsByDay: { date: string; count: number }[];
+  funnel: {
+    signedUp: number;
+    assessmentCompleted: number;
+    planRequested: number;
+    planGenerated: number;
+  };
+  recentUsers: {
+    id: number;
+    name: string;
+    email: string;
+    createdAt: string;
+  }[];
+}
+
+// Users list — paginated response from GET /admin/users.
+
+export interface AdminUsersPage {
+  items: AdminUser[];
   total: number;
 }
 

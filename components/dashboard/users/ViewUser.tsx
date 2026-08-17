@@ -1,7 +1,15 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeftCircle } from 'lucide-react';
+import {
+  ArrowLeftCircle,
+  CheckCircle,
+  XCircle,
+  Flame,
+  Dumbbell,
+  UtensilsCrossed,
+  Smartphone,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +25,44 @@ import {
 
 import { useGetUser } from '@/hooks/admin/useGetUser';
 
+const screenLabel = (key: string): string =>
+  key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim();
+
+const StatusIcon = ({ done }: { done: boolean }) =>
+  done ? (
+    <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+  ) : (
+    <XCircle className="w-4 h-4 text-gray-400 shrink-0" />
+  );
+
+const StatusRow = ({ label, done }: { label: string; done: boolean }) => (
+  <div className="flex items-center justify-between py-1.5">
+    <span className="text-sm text-slate-700">{label}</span>
+    <StatusIcon done={done} />
+  </div>
+);
+
+const ActivityStat = ({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ComponentType<{ className?: string }>;
+}) => (
+  <div className="rounded-md border border-gray-100 p-3">
+    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </div>
+    <div className="text-lg font-semibold text-slate-800">{value}</div>
+  </div>
+);
+
 export default function ViewUser() {
   const router = useRouter();
   const { id } = useParams() as { id: string };
@@ -30,6 +76,12 @@ export default function ViewUser() {
   if (!user) {
     return <div className="p-6 text-red-500">User not found</div>;
   }
+
+  const onboarding = user.onboarding;
+  const walkthrough = user.walkthrough as
+    | { key: string; completed: boolean }[]
+    | undefined;
+  const activity = user.activity;
 
   return (
     <div className="max-w-3xl w-full mx-auto px-4 py-6 space-y-6">
@@ -52,11 +104,11 @@ export default function ViewUser() {
             </div>
             <div className="space-y-2">
               <Label>First Name</Label>
-              <Input value={user.firstName} disabled />
+              <Input value={user.firstName ?? ''} disabled />
             </div>
             <div className="space-y-2">
               <Label>Last Name</Label>
-              <Input value={user.lastName} disabled />
+              <Input value={user.lastName ?? ''} disabled />
             </div>
             <div className="space-y-2">
               <Label>Date of Birth</Label>
@@ -68,11 +120,11 @@ export default function ViewUser() {
             </div>
             <div className="space-y-2">
               <Label>Height (cm)</Label>
-              <Input type="number" value={user.height} disabled />
+              <Input type="number" value={user.height ?? ''} disabled />
             </div>
             <div className="space-y-2">
               <Label>Weight (kg)</Label>
-              <Input type="number" value={user.weight} disabled />
+              <Input type="number" value={user.weight ?? ''} disabled />
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
@@ -101,6 +153,116 @@ export default function ViewUser() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Onboarding — the product definition (assessment + initial plan), NOT
+          the tutorial. Rendered only when the backend provides it, so an older
+          backend can never crash this page. */}
+      {onboarding && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Onboarding</CardTitle>
+            </CardHeader>
+            <CardContent className="divide-y divide-gray-100">
+              <StatusRow
+                label="Basic (profile)"
+                done={onboarding.basicComplete}
+              />
+              <StatusRow
+                label="Workout answers"
+                done={onboarding.workoutAnswered}
+              />
+              <StatusRow
+                label="Meal answers"
+                done={onboarding.mealAnswered}
+              />
+              <StatusRow
+                label="Initial Plan Requested"
+                done={onboarding.initialPlanRequested}
+              />
+              <StatusRow
+                label="Plan Generated"
+                done={onboarding.planGenerated}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Walkthrough tutorial progress — informational, separate from
+              onboarding on purpose. */}
+          {walkthrough && walkthrough.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Walkthrough</CardTitle>
+              </CardHeader>
+              <CardContent className="divide-y divide-gray-100">
+                {walkthrough.map((screen) => (
+                  <StatusRow
+                    key={screen.key}
+                    label={screenLabel(screen.key)}
+                    done={screen.completed}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {activity && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <ActivityStat
+                label="Current Streak"
+                value={activity.currentStreak}
+                icon={Flame}
+              />
+              <ActivityStat
+                label="Longest Streak"
+                value={activity.longestStreak}
+                icon={Flame}
+              />
+              <ActivityStat
+                label="Workout Plans"
+                value={activity.workoutPlansGenerated}
+                icon={Dumbbell}
+              />
+              <ActivityStat
+                label="Meal Plans"
+                value={activity.mealPlansGenerated}
+                icon={UtensilsCrossed}
+              />
+              <ActivityStat
+                label="Workouts Logged"
+                value={activity.workoutsLogged}
+                icon={Dumbbell}
+              />
+              <ActivityStat
+                label="Meals Logged"
+                value={activity.mealsLogged}
+                icon={UtensilsCrossed}
+              />
+              <ActivityStat
+                label="App Opens"
+                value={activity.appOpenCount}
+                icon={Smartphone}
+              />
+              <ActivityStat
+                label="Last App Open"
+                value={
+                  activity.lastAppOpenAt
+                    ? new Date(activity.lastAppOpenAt).toLocaleDateString()
+                    : '—'
+                }
+                icon={Smartphone}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

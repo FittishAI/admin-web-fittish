@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import FittishLogo from "@/assets/icons/FittishLogo";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLogin } from "@/hooks/useLogin";
 
@@ -37,10 +37,18 @@ export default function LoginForm() {
     <Card className="w-full max-w-md shadow font-Inter">
       <CardContent className="py-10 px-6 space-y-6">
         <div className="text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="h-12 w-12 rounded-full flex items-center justify-center text-2xl">
-              <FittishLogo width={64} height={64} />
-            </div>
+          <div className="mb-2 flex justify-center">
+            {/* Official Fittish.AI logo (provided splash asset). */}
+            {/* Full-size logo from public/ — the assets copy is now the small
+                lockup (78x49) and would blur if stretched to this size. */}
+            <Image
+              src="/logo.png"
+              alt="FITTISH.AI"
+              width={160}
+              height={160}
+              priority
+              className="h-32 w-32 object-contain"
+            />
           </div>
           <h1 className="text-2xl font-bold">Fittish Admin</h1>
           <p className="text-sm text-gray-500">

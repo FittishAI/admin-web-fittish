@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Eye, Pencil, Trash2, Search, UserPlus, CheckCircle, XCircle, Dumbbell, UtensilsCrossed, Flame } from 'lucide-react';
@@ -53,8 +53,8 @@ const getPlanBadge = (planName?: string | null) => {
     upper === 'PREMIUM'
       ? 'bg-amber-100 text-amber-700'
       : upper === 'FREE'
-      ? 'bg-sky-100 text-sky-700'
-      : 'bg-gray-100 text-gray-600';
+        ? 'bg-sky-100 text-sky-700'
+        : 'bg-gray-100 text-gray-600';
   return (
     <span className={`px-2 py-1 rounded text-xs font-medium ${variant}`}>
       {plan}
@@ -66,20 +66,38 @@ const StatCell = ({ value }: { value: number }) => (
   <span className="font-medium text-slate-700">{value}</span>
 );
 
+const PAGE_SIZE = 20;
+
 export default function UserManagment() {
   const router = useRouter();
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [offset, setOffset] = useState(0);
   const [openDialogId, setOpenDialogId] = useState<string | null>(null);
 
-  const { data: users = [], isLoading } = useGetAllUsers();
+  // Debounce so each keystroke doesn't fire a server query.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setOffset(0);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const { data, isLoading } = useGetAllUsers({
+    offset,
+    limit: PAGE_SIZE,
+    search,
+  });
   const { mutate: deleteUser } = useDeleteUser();
 
-  const filtered = (users as AdminUser[]).filter((user) =>
-    [user.email, user.firstName, user.lastName, user.role]
-      .join(' ')
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const users: AdminUser[] = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  const rangeStart = total === 0 ? 0 : Math.min(offset + 1, total);
+  const rangeEnd = Math.min(offset + PAGE_SIZE, total);
+  const canPrev = offset > 0;
+  const canNext = offset + PAGE_SIZE < total;
 
   const handleDelete = (id: string, name: string) => {
     deleteUser(id, {
@@ -116,8 +134,8 @@ export default function UserManagment() {
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name, email or role..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="pl-9"
         />
       </div>
@@ -132,6 +150,7 @@ export default function UserManagment() {
               <TableHead rowSpan={2} className="align-middle">Role</TableHead>
               <TableHead rowSpan={2} className="align-middle">Status</TableHead>
               <TableHead rowSpan={2} className="align-middle">Onboarded</TableHead>
+              <TableHead rowSpan={2} className="align-middle">Walkthrough</TableHead>
               <TableHead
                 colSpan={2}
                 className="text-center border-l border-orange-200 bg-orange-50/60 text-orange-800 font-semibold"
@@ -178,7 +197,7 @@ export default function UserManagment() {
             {isLoading ? (
               [...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(12)].map((_, j) => (
+                  {[...Array(13)].map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -191,8 +210,8 @@ export default function UserManagment() {
                   </TableCell>
                 </TableRow>
               ))
-            ) : filtered.length > 0 ? (
-              filtered.map((user) => (
+            ) : users.length > 0 ? (
+              users.map((user) => (
                 <TableRow
                   key={user.id}
                   onClick={() =>
@@ -221,6 +240,23 @@ export default function UserManagment() {
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     ) : (
                       <XCircle className="w-4 h-4 text-gray-400" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {typeof user.walkthroughCompleted === 'number' &&
+                      typeof user.walkthroughTotal === 'number' ? (
+                      <span
+                        className={`text-sm font-medium tabular-nums ${user.walkthroughCompleted === user.walkthroughTotal
+                            ? 'text-green-600'
+                            : user.walkthroughCompleted > 0
+                              ? 'text-slate-700'
+                              : 'text-gray-400'
+                          }`}
+                      >
+                        {user.walkthroughCompleted}/{user.walkthroughTotal}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
                     )}
                   </TableCell>
                   {/* Streak group */}
@@ -275,58 +311,60 @@ export default function UserManagment() {
                         <Pencil className="w-4 h-4 mr-1" />
                         Edit
                       </Button>
-                      <Dialog
-                        open={openDialogId === String(user.id)}
-                        onOpenChange={(open) =>
-                          setOpenDialogId(open ? String(user.id) : null)
-                        }
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            Delete
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent onClick={(e) => e.stopPropagation()}>
-                          <DialogHeader>
-                            <DialogTitle>Confirm Deletion</DialogTitle>
-                          </DialogHeader>
-                          <p className="text-sm text-muted-foreground">
-                            Are you sure you want to delete{' '}
-                            <strong>
-                              {user.firstName} {user.lastName}
-                            </strong>
-                            ? This action cannot be undone.
-                          </p>
-                          <DialogFooter className="pt-4">
+                      {user.role !== 'ADMIN' && (
+                        <Dialog
+                          open={openDialogId === String(user.id)}
+                          onOpenChange={(open) =>
+                            setOpenDialogId(open ? String(user.id) : null)
+                          }
+                        >
+                          <DialogTrigger asChild>
                             <Button
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenDialogId(null);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
+                              size="sm"
                               variant="destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(
-                                  String(user.id),
-                                  `${user.firstName} ${user.lastName}`
-                                );
-                              }}
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              Confirm Delete
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Delete
                             </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogTrigger>
+                          <DialogContent onClick={(e) => e.stopPropagation()}>
+                            <DialogHeader>
+                              <DialogTitle>Confirm Deletion</DialogTitle>
+                            </DialogHeader>
+                            <p className="text-sm text-muted-foreground">
+                              Are you sure you want to delete{' '}
+                              <strong>
+                                {user.firstName} {user.lastName}
+                              </strong>
+                              ? This action cannot be undone.
+                            </p>
+                            <DialogFooter className="pt-4">
+                              <Button
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenDialogId(null);
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(
+                                    String(user.id),
+                                    `${user.firstName} ${user.lastName}`
+                                  );
+                                }}
+                              >
+                                Confirm Delete
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -334,7 +372,7 @@ export default function UserManagment() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={13}
+                  colSpan={14}
                   className="text-center text-muted-foreground"
                 >
                   No users found.
@@ -343,6 +381,31 @@ export default function UserManagment() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Server-side pagination */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing {rangeStart}–{rangeEnd} of {total.toLocaleString()}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canPrev || isLoading}
+            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+          >
+            ‹ Prev
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canNext || isLoading}
+            onClick={() => setOffset(offset + PAGE_SIZE)}
+          >
+            Next ›
+          </Button>
+        </div>
       </div>
     </section>
   );
