@@ -31,7 +31,7 @@ export default function EditUser() {
     email: '',
     firstName: '',
     lastName: '',
-    dateOfBirth: '',
+    age: '',
     height: '',
     weight: '',
     role: 'USER',
@@ -44,7 +44,7 @@ export default function EditUser() {
         email: user.email || '',
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        dateOfBirth: user.dateOfBirth?.split('T')[0] || '',
+        age: user.age != null ? String(user.age) : '',
         height: user.height?.toString() || '',
         weight: user.weight?.toString() || '',
         role: user.role || 'USER',
@@ -65,9 +65,9 @@ export default function EditUser() {
           email: form.email,
           firstName: form.firstName,
           lastName: form.lastName,
-          dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : null,
-          height: form.height ? parseFloat(form.height) : null,
-          weight: form.weight ? parseFloat(form.weight) : null,
+          age: form.age ? parseInt(form.age, 10) : undefined,
+          height: form.height || undefined,
+          weight: form.weight || undefined,
           role: form.role,
           isActive: form.isActive === 'true',
         },
@@ -129,25 +129,26 @@ export default function EditUser() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Date of Birth</Label>
+              <Label>Age</Label>
               <Input
-                type="date"
-                value={form.dateOfBirth}
-                onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+                type="number"
+                min={0}
+                value={form.age}
+                onChange={(e) => handleChange('age', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Height (cm)</Label>
+              <Label>Height{user?.heightUnit ? ` (${user.heightUnit})` : ''}</Label>
               <Input
-                type="number"
+                type="text"
                 value={form.height}
                 onChange={(e) => handleChange('height', e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Weight (kg)</Label>
+              <Label>Weight{user?.weightUnit ? ` (${user.weightUnit})` : ''}</Label>
               <Input
-                type="number"
+                type="text"
                 value={form.weight}
                 onChange={(e) => handleChange('weight', e.target.value)}
               />

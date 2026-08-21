@@ -134,27 +134,46 @@ const FunnelRow = ({
   label,
   value,
   max,
+  isBaseline = false,
 }: {
   label: string;
   value: number;
   max: number;
+  isBaseline?: boolean;
 }) => {
   const pct = max > 0 ? (value / max) * 100 : 0;
   return (
-    <div className="py-1.5">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm text-slate-700">{label}</span>
-        <span className="text-sm font-semibold text-slate-900 tabular-nums">
-          {num(value)}
-          <span className="text-xs font-normal text-muted-foreground ml-1.5">
+    <div className="py-2.5 border-b border-slate-100 last:border-0">
+      <div className="flex items-center justify-between mb-1.5 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-medium text-slate-800 truncate">{label}</span>
+          {isBaseline && (
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+              Baseline
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-slate-500 font-medium tabular-nums">
+            {isBaseline ? `${num(value)} users` : `${num(value)} of ${num(max)} users`}
+          </span>
+          <span
+            className={`text-xs font-bold px-2 py-0.5 rounded-full tabular-nums ${
+              isBaseline
+                ? 'bg-slate-100 text-slate-600'
+                : 'bg-blue-50 text-[#2483FB] border border-blue-100'
+            }`}
+          >
             {pct.toFixed(0)}%
           </span>
-        </span>
+        </div>
       </div>
-      <div className="h-3 rounded-[4px] bg-gray-100 overflow-hidden">
+      <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
         <div
-          className="h-full rounded-r-[4px]"
-          style={{ width: `${pct}%`, backgroundColor: CHART_BLUE }}
+          className={`h-full rounded-full transition-all duration-500 ${
+            isBaseline ? 'bg-slate-300' : 'bg-[#2483FB]'
+          }`}
+          style={{ width: `${Math.min(pct, 100)}%` }}
         />
       </div>
     </div>
@@ -167,14 +186,22 @@ const OnboardingFunnel = ({
   funnel: DashboardStats['funnel'];
 }) => (
   <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-base">Onboarding Funnel</CardTitle>
+    <CardHeader className="pb-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <CardTitle className="text-base">Onboarding Funnel</CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            User conversion stages relative to total signups ({num(funnel.signedUp)})
+          </p>
+        </div>
+      </div>
     </CardHeader>
-    <CardContent className="pt-0">
+    <CardContent className="pt-0 divide-y-0">
       <FunnelRow
         label="Signed Up"
         value={funnel.signedUp}
         max={funnel.signedUp}
+        isBaseline
       />
       <FunnelRow
         label="Assessment Completed"

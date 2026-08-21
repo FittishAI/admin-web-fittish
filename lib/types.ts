@@ -70,9 +70,10 @@ export interface AdminUser {
   createdAt: string;
   updatedAt: string;
   onboardingCompleted: boolean;
-  /** Tutorial screens done / total. Optional: absent on an older backend. */
   walkthroughCompleted?: number;
   walkthroughTotal?: number;
+  lastAppOpenAt?: string | null;
+  lastLoginAt?: string | null;
   planName: string | null;
   workoutPlansGenerated: number;
   mealPlansGenerated: number;
@@ -101,6 +102,8 @@ export interface TokenUsageRow {
   action: TokenUsageAction;
   planId: number | null;
   planTitle: string | null;
+  /** When the plan was created; null for rows with no plan. */
+  planCreatedAt?: string | null;
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;

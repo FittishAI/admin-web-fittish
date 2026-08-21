@@ -66,6 +66,15 @@ const StatCell = ({ value }: { value: number }) => (
   <span className="font-medium text-slate-700">{value}</span>
 );
 
+const fmtDate = (iso?: string | null): string =>
+  iso
+    ? new Date(iso).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '—';
+
 const PAGE_SIZE = 20;
 
 export default function UserManagment() {
@@ -151,6 +160,8 @@ export default function UserManagment() {
               <TableHead rowSpan={2} className="align-middle">Status</TableHead>
               <TableHead rowSpan={2} className="align-middle">Onboarded</TableHead>
               <TableHead rowSpan={2} className="align-middle">Walkthrough</TableHead>
+              <TableHead rowSpan={2} className="align-middle whitespace-nowrap">Last App Open</TableHead>
+              <TableHead rowSpan={2} className="align-middle whitespace-nowrap">Last Login</TableHead>
               <TableHead
                 colSpan={2}
                 className="text-center border-l border-orange-200 bg-orange-50/60 text-orange-800 font-semibold"
@@ -197,7 +208,7 @@ export default function UserManagment() {
             {isLoading ? (
               [...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(13)].map((_, j) => (
+                  {[...Array(15)].map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -258,6 +269,12 @@ export default function UserManagment() {
                     ) : (
                       <span className="text-gray-400">—</span>
                     )}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm text-slate-600">
+                    {fmtDate(user.lastAppOpenAt)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm text-slate-600">
+                    {fmtDate(user.lastLoginAt)}
                   </TableCell>
                   {/* Streak group */}
                   <TableCell className="border-l border-orange-100">
@@ -372,7 +389,7 @@ export default function UserManagment() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={14}
+                  colSpan={16}
                   className="text-center text-muted-foreground"
                 >
                   No users found.

@@ -39,7 +39,7 @@ import {
 const PAGE_SIZE = 20;
 const ALL_ACTIONS = 'ALL';
 
-const COLUMN_COUNT = 8;
+const COLUMN_COUNT = 9;
 
 /** WORKOUT_PLAN → "Workout Plan" */
 const prettyAction = (action: string) =>
@@ -296,6 +296,7 @@ export default function TokenUsageTable() {
               <TableHead>Email</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Plan</TableHead>
+              <TableHead className="whitespace-nowrap">Plan Created</TableHead>
               <TableHead className="text-right">Input Tokens</TableHead>
               <TableHead className="text-right">Output Tokens</TableHead>
               <TableHead className="text-right">Total Tokens</TableHead>
@@ -345,6 +346,17 @@ export default function TokenUsageTable() {
                     title={row.planTitle ?? undefined}
                   >
                     {row.planTitle ?? (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm text-slate-600">
+                    {row.planCreatedAt ? (
+                      new Date(row.planCreatedAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>

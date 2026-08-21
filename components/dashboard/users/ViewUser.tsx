@@ -25,6 +25,15 @@ import {
 
 import { useGetUser } from '@/hooks/admin/useGetUser';
 
+const withUnit = (
+  value?: string | null,
+  unit?: string | null
+): string => {
+  if (!value) return '';
+  if (unit && !value.includes(unit)) return `${value} ${unit}`;
+  return value;
+};
+
 const screenLabel = (key: string): string =>
   key
     .replace(/([A-Z])/g, ' $1')
@@ -111,20 +120,24 @@ export default function ViewUser() {
               <Input value={user.lastName ?? ''} disabled />
             </div>
             <div className="space-y-2">
-              <Label>Date of Birth</Label>
+              <Label>Age</Label>
+              <Input type="text" value={user.age ?? ''} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Height</Label>
               <Input
-                type="date"
-                value={user.dateOfBirth?.split('T')[0] || ''}
+                type="text"
+                value={withUnit(user.height, user.heightUnit)}
                 disabled
               />
             </div>
             <div className="space-y-2">
-              <Label>Height (cm)</Label>
-              <Input type="number" value={user.height ?? ''} disabled />
-            </div>
-            <div className="space-y-2">
-              <Label>Weight (kg)</Label>
-              <Input type="number" value={user.weight ?? ''} disabled />
+              <Label>Weight</Label>
+              <Input
+                type="text"
+                value={withUnit(user.weight, user.weightUnit)}
+                disabled
+              />
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
@@ -177,7 +190,7 @@ export default function ViewUser() {
                 done={onboarding.mealAnswered}
               />
               <StatusRow
-                label="Initial Plan Requested"
+                label="Onboarding Completed"
                 done={onboarding.initialPlanRequested}
               />
               <StatusRow
