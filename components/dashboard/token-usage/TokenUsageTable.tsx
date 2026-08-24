@@ -30,6 +30,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useGetTokenUsage } from '@/hooks/admin/useGetTokenUsage';
+import StatTile from '@/components/dashboard/StatTile';
+import { formatDate, formatNumber, formatUsd } from '@/lib/format';
 import {
   TOKEN_USAGE_ACTIONS,
   TokenUsageAction,
@@ -58,51 +60,6 @@ const ACTION_STYLES: Record<string, string> = {
   WORKOUT_RECOMMENDATIONS: 'bg-indigo-100 text-indigo-700',
   RECIPE_EXTRACT: 'bg-amber-100 text-amber-700',
 };
-
-const num = (n: number) => n.toLocaleString();
-
-const usd = (n: number | null): string => {
-  if (n === null) return '—';
-  if (n === 0) return '$0.00';
-  if (n < 0.01) return `$${n.toFixed(4)}`;
-  return `$${n.toFixed(2)}`;
-};
-
-const compact = (n: number) => {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-};
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  loading,
-}: {
-  label: string;
-  value: number;
-  icon: React.ElementType;
-  loading: boolean;
-}) {
-  return (
-    <Card className="h-full">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-1">
-          <Icon className="w-4 h-4 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">{label}</p>
-        </div>
-        {loading ? (
-          <Skeleton className="h-8 w-24" />
-        ) : (
-          <div className="text-2xl font-bold" title={num(value)}>
-            {compact(value)}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function TokenUsageTable() {
   const [searchInput, setSearchInput] = useState('');
@@ -169,37 +126,41 @@ export default function TokenUsageTable() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="text-2xl font-bold text-emerald-700">
-                {usd(totals?.costUsd ?? 0)}
+                {formatUsd(totals?.costUsd ?? 0)}
               </div>
             )}
             {/* A partial total must never be presented as the whole bill. */}
             {!isLoading && (totals?.unpricedRequests ?? 0) > 0 && (
               <p className="text-xs text-amber-600 mt-1">
-                excludes {num(totals!.unpricedRequests)} request
+                excludes {formatNumber(totals!.unpricedRequests)} request
                 {totals!.unpricedRequests === 1 ? '' : 's'} with no listed price
               </p>
             )}
           </CardContent>
         </Card>
-        <StatCard
+        <StatTile
+          compact
           label="Total Input Tokens"
           value={totals?.inputTokens ?? 0}
           icon={ArrowDownToLine}
           loading={isLoading}
         />
-        <StatCard
+        <StatTile
+          compact
           label="Total Output Tokens"
           value={totals?.outputTokens ?? 0}
           icon={ArrowUpFromLine}
           loading={isLoading}
         />
-        <StatCard
+        <StatTile
+          compact
           label="Total Tokens"
           value={totals?.totalTokens ?? 0}
           icon={Coins}
           loading={isLoading}
         />
-        <StatCard
+        <StatTile
+          compact
           label="Total GPT Requests"
           value={totals?.requests ?? 0}
           icon={Hash}
@@ -350,28 +311,20 @@ export default function TokenUsageTable() {
                     )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-slate-600">
-                    {row.planCreatedAt ? (
-                      new Date(row.planCreatedAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    {formatDate(row.planCreatedAt)}
                   </TableCell>
                   <TableCell
                     className="text-right tabular-nums"
                     title={
                       row.cachedInputTokens > 0
-                        ? `${num(row.cachedInputTokens)} cached (billed at the cheaper cached rate)`
+                        ? `${formatNumber(row.cachedInputTokens)} cached (billed at the cheaper cached rate)`
                         : undefined
                     }
                   >
-                    {num(row.inputTokens)}
+                    {formatNumber(row.inputTokens)}
                     {row.cachedInputTokens > 0 && (
                       <span className="ml-1 text-xs text-sky-600">
-                        ({num(row.cachedInputTokens)} cached)
+                        ({formatNumber(row.cachedInputTokens)} cached)
                       </span>
                     )}
                   </TableCell>
@@ -379,19 +332,19 @@ export default function TokenUsageTable() {
                     className="text-right tabular-nums"
                     title={
                       row.reasoningTokens > 0
-                        ? `${num(row.reasoningTokens)} reasoning tokens (already billed as output)`
+                        ? `${formatNumber(row.reasoningTokens)} reasoning tokens (already billed as output)`
                         : undefined
                     }
                   >
-                    {num(row.outputTokens)}
+                    {formatNumber(row.outputTokens)}
                     {row.reasoningTokens > 0 && (
                       <span className="ml-1 text-xs text-violet-600">
-                        ({num(row.reasoningTokens)} reasoning)
+                        ({formatNumber(row.reasoningTokens)} reasoning)
                       </span>
                     )}
                   </TableCell>
                   <TableCell className="text-right tabular-nums font-semibold">
-                    {num(row.totalTokens)}
+                    {formatNumber(row.totalTokens)}
                   </TableCell>
                   <TableCell
                     className={`text-right tabular-nums font-semibold ${
@@ -403,7 +356,7 @@ export default function TokenUsageTable() {
                         : undefined
                     }
                   >
-                    {usd(row.costUsd)}
+                    {formatUsd(row.costUsd)}
                   </TableCell>
                 </TableRow>
               ))

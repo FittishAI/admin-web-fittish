@@ -28,6 +28,7 @@ import {
 import { useGetAllUsers } from '@/hooks/admin/useGetAllUsers';
 import { useDeleteUser } from '@/hooks/admin/useDeleteUser';
 import { AdminUser } from '@/lib/types';
+import { formatDate, formatNumber } from '@/lib/format';
 
 const getRoleBadge = (role?: string) => {
   const safeRole = role || 'user';
@@ -66,14 +67,28 @@ const StatCell = ({ value }: { value: number }) => (
   <span className="font-medium text-slate-700">{value}</span>
 );
 
-const fmtDate = (iso?: string | null): string =>
-  iso
-    ? new Date(iso).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : '—';
+const QuotaCell = ({
+  used,
+  limit,
+  generated,
+}: {
+  used?: number | null;
+  limit?: number | null;
+  generated: number;
+}) => {
+  if (typeof used !== 'number' || typeof limit !== 'number') {
+    return <span className="font-medium text-slate-700">{generated}</span>;
+  }
+  const spent = used >= limit;
+  return (
+    <span
+      className={`font-medium tabular-nums ${spent ? 'text-amber-600' : 'text-slate-700'}`}
+      title={`${used} of ${limit} used this period · ${generated} generated all-time`}
+    >
+      {used}/{limit}
+    </span>
+  );
+};
 
 const PAGE_SIZE = 20;
 
@@ -161,7 +176,13 @@ export default function UserManagment() {
               <TableHead rowSpan={2} className="align-middle">Onboarded</TableHead>
               <TableHead rowSpan={2} className="align-middle">Walkthrough</TableHead>
               <TableHead rowSpan={2} className="align-middle whitespace-nowrap">Last App Open</TableHead>
-              <TableHead rowSpan={2} className="align-middle whitespace-nowrap">Last Login</TableHead>
+              <TableHead
+                rowSpan={2}
+                className="align-middle whitespace-nowrap"
+                title="Newest session activity — written on sign-in and on every token refresh"
+              >
+                Last Session
+              </TableHead>
               <TableHead
                 colSpan={2}
                 className="text-center border-l border-orange-200 bg-orange-50/60 text-orange-800 font-semibold"
@@ -258,10 +279,10 @@ export default function UserManagment() {
                       typeof user.walkthroughTotal === 'number' ? (
                       <span
                         className={`text-sm font-medium tabular-nums ${user.walkthroughCompleted === user.walkthroughTotal
-                            ? 'text-green-600'
-                            : user.walkthroughCompleted > 0
-                              ? 'text-slate-700'
-                              : 'text-gray-400'
+                          ? 'text-green-600'
+                          : user.walkthroughCompleted > 0
+                            ? 'text-slate-700'
+                            : 'text-gray-400'
                           }`}
                       >
                         {user.walkthroughCompleted}/{user.walkthroughTotal}
@@ -271,10 +292,10 @@ export default function UserManagment() {
                     )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-slate-600">
-                    {fmtDate(user.lastAppOpenAt)}
+                    {formatDate(user.lastAppOpenAt)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-slate-600">
-                    {fmtDate(user.lastLoginAt)}
+                    {formatDate(user.lastLoginAt)}
                   </TableCell>
                   {/* Streak group */}
                   <TableCell className="border-l border-orange-100">
@@ -292,10 +313,18 @@ export default function UserManagment() {
                   {/* Plans group */}
                   <TableCell className="border-l border-blue-100">{getPlanBadge(user.planName)}</TableCell>
                   <TableCell>
-                    <StatCell value={user.workoutPlansGenerated} />
+                    <QuotaCell
+                      used={user.workoutPlanUsage}
+                      limit={user.workoutPlanLimit}
+                      generated={user.workoutPlansGenerated}
+                    />
                   </TableCell>
                   <TableCell>
-                    <StatCell value={user.mealPlansGenerated} />
+                    <QuotaCell
+                      used={user.mealPlanUsage}
+                      limit={user.mealPlanLimit}
+                      generated={user.mealPlansGenerated}
+                    />
                   </TableCell>
                   {/* Logged group */}
                   <TableCell className="border-l border-green-100">
@@ -403,7 +432,7 @@ export default function UserManagment() {
       {/* Server-side pagination */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing {rangeStart}–{rangeEnd} of {total.toLocaleString()}
+          Showing {rangeStart}–{rangeEnd} of {formatNumber(total)}
         </p>
         <div className="flex gap-2">
           <Button

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Home, List, Users, Coins } from 'lucide-react';
+import { Home, List, Users, Coins, AlertTriangle } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/lib/store/authSlice';
@@ -34,9 +34,8 @@ function BrandImage({
         height={height}
         priority
         onLoad={() => setLoaded(true)}
-        className={`h-full w-full object-contain transition-opacity ${
-          loaded ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`h-full w-full object-contain transition-opacity ${loaded ? 'opacity-100' : 'opacity-0'
+          }`}
       />
     </span>
   );
@@ -47,6 +46,7 @@ const mainNav = [
   { label: 'Questionnaires', href: '/dashboard/questionnaires', icon: List },
   { label: 'Users', href: '/dashboard/users', icon: Users },
   { label: 'Token Usage', href: '/dashboard/token-usage', icon: Coins },
+  { label: 'Plan Failures', href: '/dashboard/plan-generations', icon: AlertTriangle },
 ];
 
 export default function Sidebar() {
@@ -89,14 +89,19 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="mt-6 border-t pt-4 px-2">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className="h-8 w-8 shrink-0">
             <AvatarFallback className="text-xs font-semibold">
               {(user?.email?.[0] ?? '?').toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="font-medium">{user?.email ?? '—'}</span>
+          <div className="flex flex-col min-w-0">
+            <span
+              className="font-medium truncate"
+              title={user?.email ?? undefined}
+            >
+              {user?.email ?? '—'}
+            </span>
             <span className="text-xs text-muted-foreground">
               {user?.role ?? '—'}
             </span>

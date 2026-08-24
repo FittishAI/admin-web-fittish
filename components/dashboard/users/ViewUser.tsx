@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 
 import { useGetUser } from '@/hooks/admin/useGetUser';
+import { formatDate } from '@/lib/format';
 
 const withUnit = (
   value?: string | null,
@@ -265,11 +266,7 @@ export default function ViewUser() {
               />
               <ActivityStat
                 label="Last App Open"
-                value={
-                  activity.lastAppOpenAt
-                    ? new Date(activity.lastAppOpenAt).toLocaleDateString()
-                    : '—'
-                }
+                value={formatDate(activity.lastAppOpenAt)}
                 icon={Smartphone}
               />
             </div>

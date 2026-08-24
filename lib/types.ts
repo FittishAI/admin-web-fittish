@@ -72,6 +72,10 @@ export interface AdminUser {
   onboardingCompleted: boolean;
   walkthroughCompleted?: number;
   walkthroughTotal?: number;
+  workoutPlanUsage?: number | null;
+  workoutPlanLimit?: number | null;
+  mealPlanUsage?: number | null;
+  mealPlanLimit?: number | null;
   lastAppOpenAt?: string | null;
   lastLoginAt?: string | null;
   planName: string | null;
@@ -169,6 +173,35 @@ export interface TokenUsageFilters {
   action?: TokenUsageAction | '';
   from?: string;
   to?: string;
+  offset: number;
+  limit: number;
+}
+
+export interface FailedPlanGeneration {
+  jobId: string;
+  generationId: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  type: 'WORKOUT' | 'MEAL';
+  attempts: number;
+  maxAttempts?: number | null;
+  error: string | null;
+  failedAt: string | null;
+  quotaAvailable: boolean | null;
+  quotaUsed?: number | null;
+  quotaLimit?: number | null;
+  bullBoardUrl: string;
+}
+
+export interface FailedPlanGenerationsPage {
+  items: FailedPlanGeneration[];
+  total: number;
+  truncated: boolean;
+}
+
+export interface FailedPlanGenerationFilters {
+  search?: string;
   offset: number;
   limit: number;
 }

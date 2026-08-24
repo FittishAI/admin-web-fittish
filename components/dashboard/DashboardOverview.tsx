@@ -22,39 +22,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetDashboardStats } from '@/hooks/admin/useGetDashboardStats';
 import type { DashboardStats } from '@/lib/types';
+import StatTile from '@/components/dashboard/StatTile';
+import {
+  formatDate,
+  formatNumber,
+  formatUtcDayLong,
+  formatUtcDayShort,
+} from '@/lib/format';
 
 /** Brand blue from the Fittish logo — validated for chart use on light surface. */
 const CHART_BLUE = '#2483FB';
-
-const num = (n: number) => n.toLocaleString();
-
-/* ---------------------------------- tiles --------------------------------- */
-
-const StatTile = ({
-  label,
-  value,
-  icon: Icon,
-  loading,
-}: {
-  label: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  loading: boolean;
-}) => (
-  <Card className="h-full">
-    <CardContent className="p-4">
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className="w-4 h-4 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">{label}</p>
-      </div>
-      {loading ? (
-        <Skeleton className="h-8 w-20" />
-      ) : (
-        <div className="text-2xl font-bold text-slate-900">{num(value)}</div>
-      )}
-    </CardContent>
-  </Card>
-);
 
 /* ---------------------------------- chart --------------------------------- */
 
@@ -77,13 +54,7 @@ const SignupsChart = ({ data }: { data: DashboardStats['signupsByDay'] }) => (
             />
             <XAxis
               dataKey="date"
-              tickFormatter={(d: string) =>
-                new Date(`${d}T00:00:00Z`).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  timeZone: 'UTC',
-                })
-              }
+              tickFormatter={formatUtcDayShort}
               interval={6}
               tickLine={false}
               axisLine={false}
@@ -98,18 +69,8 @@ const SignupsChart = ({ data }: { data: DashboardStats['signupsByDay'] }) => (
             />
             <Tooltip
               cursor={{ stroke: '#9ca3af', strokeWidth: 1 }}
-              labelFormatter={(d) =>
-                new Date(`${String(d)}T00:00:00Z`).toLocaleDateString(
-                  undefined,
-                  {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                    timeZone: 'UTC',
-                  }
-                )
-              }
-              formatter={(value) => [num(Number(value)), 'Signups']}
+              labelFormatter={(d) => formatUtcDayLong(String(d))}
+              formatter={(value) => [formatNumber(Number(value)), 'Signups']}
             />
             <Area
               type="monotone"
@@ -155,7 +116,7 @@ const FunnelRow = ({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-slate-500 font-medium tabular-nums">
-            {isBaseline ? `${num(value)} users` : `${num(value)} of ${num(max)} users`}
+            {isBaseline ? `${formatNumber(value)} users` : `${formatNumber(value)} of ${formatNumber(max)} users`}
           </span>
           <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full tabular-nums ${
@@ -191,7 +152,7 @@ const OnboardingFunnel = ({
         <div>
           <CardTitle className="text-base">Onboarding Funnel</CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            User conversion stages relative to total signups ({num(funnel.signedUp)})
+            User conversion stages relative to total signups ({formatNumber(funnel.signedUp)})
           </p>
         </div>
       </div>
@@ -209,7 +170,7 @@ const OnboardingFunnel = ({
         max={funnel.signedUp}
       />
       <FunnelRow
-        label="Initial Plan Requested"
+        label="Onboarding Completed"
         value={funnel.planRequested}
         max={funnel.signedUp}
       />
@@ -267,11 +228,7 @@ const RecentUsers = ({
               </p>
             </div>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {new Date(user.createdAt).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
+              {formatDate(user.createdAt)}
             </span>
           </button>
         ))}
