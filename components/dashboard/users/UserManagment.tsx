@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Eye, Pencil, Trash2, Search, UserPlus, CheckCircle, XCircle, Dumbbell, UtensilsCrossed, Flame } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, UserPlus, CheckCircle, XCircle, Dumbbell, UtensilsCrossed, Flame, CalendarClock, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import TablePagination from '@/components/dashboard/TablePagination';
+import ExtendTrialDialog from './ExtendTrialDialog';
 import { useGetAllUsers } from '@/hooks/admin/useGetAllUsers';
 import { useDeleteUser } from '@/hooks/admin/useDeleteUser';
 import { AdminUser } from '@/lib/types';
@@ -90,7 +93,46 @@ const QuotaCell = ({
   );
 };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
+
+const TrialCell = ({ user }: { user: AdminUser }) => {
+  const end = user.effectiveTrialEndsAt;
+  if (!end) return <span className="text-gray-400">—</span>;
+
+  if ((user.planName ?? 'FREE') !== 'FREE') {
+    return (
+      <span
+        className="text-gray-400"
+        title="Paid plan — the free trial does not apply"
+      >
+        —
+      </span>
+    );
+  }
+
+  const days = user.trialDaysRemaining ?? 0;
+  const active = !!user.trialActive;
+  const isFallback = user.trialSource === 'FALLBACK';
+
+  return (
+    <span
+      className={`text-sm font-medium whitespace-nowrap ${active ? 'text-slate-700' : 'text-amber-600'} ${isFallback ? 'italic' : ''}`}
+      title={
+        (active
+          ? `Trial ends ${formatDate(end)}`
+          : `Trial ended ${formatDate(end)}`) +
+        (isFallback
+          ? ' — no stored trial date; falling back to signup + 7 days'
+          : '')
+      }
+    >
+      {active ? `${days} day${days === 1 ? '' : 's'} left` : 'Expired'}
+    </span>
+  );
+};
+
+const isGrantable = (user: AdminUser) =>
+  (user.planName ?? 'FREE') === 'FREE' && !user.isDeleted;
 
 export default function UserManagment() {
   const router = useRouter();
@@ -98,6 +140,11 @@ export default function UserManagment() {
   const [search, setSearch] = useState('');
   const [offset, setOffset] = useState(0);
   const [openDialogId, setOpenDialogId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedRows, setSelectedRows] = useState<Map<number, AdminUser>>(
+    new Map()
+  );
+  const [trialDialogOpen, setTrialDialogOpen] = useState(false);
 
   // Debounce so each keystroke doesn't fire a server query.
   useEffect(() => {
@@ -118,23 +165,61 @@ export default function UserManagment() {
   const users: AdminUser[] = data?.items ?? [];
   const total = data?.total ?? 0;
 
-  const rangeStart = total === 0 ? 0 : Math.min(offset + 1, total);
-  const rangeEnd = Math.min(offset + PAGE_SIZE, total);
-  const canPrev = offset > 0;
-  const canNext = offset + PAGE_SIZE < total;
+  const selectablePageUsers = users.filter(isGrantable);
+  const pageSelectedCount = selectablePageUsers.filter((u) =>
+    selectedIds.has(u.id)
+  ).length;
+  const pageAllSelected =
+    selectablePageUsers.length > 0 &&
+    pageSelectedCount === selectablePageUsers.length;
+
+  const toggleOne = (user: AdminUser, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(user.id);
+      else next.delete(user.id);
+      return next;
+    });
+    setSelectedRows((prev) => {
+      const next = new Map(prev);
+      if (checked) next.set(user.id, user);
+      else next.delete(user.id);
+      return next;
+    });
+  };
+
+  const togglePage = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      selectablePageUsers.forEach((u) =>
+        checked ? next.add(u.id) : next.delete(u.id)
+      );
+      return next;
+    });
+    setSelectedRows((prev) => {
+      const next = new Map(prev);
+      selectablePageUsers.forEach((u) =>
+        checked ? next.set(u.id, u) : next.delete(u.id)
+      );
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectedRows(new Map());
+  };
 
   const handleDelete = (id: string, name: string) => {
     deleteUser(id, {
       onSuccess: () => {
-        toast.success('User deleted', {
-          description: name,
+        toast.success('Success', {
+          description: `User deleted — ${name}`,
         });
         setOpenDialogId(null);
       },
       onError: (err: any) => {
-        toast.error('Failed to delete', {
-          description: err.message || 'Unexpected error',
-        });
+        toast.error(err.message || 'Could not delete the user.');
       },
     });
   };
@@ -164,15 +249,59 @@ export default function UserManagment() {
         />
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-md border border-blue-200 bg-blue-50/70 px-4 py-3">
+          <p className="text-sm font-medium text-slate-800">
+            {formatNumber(selectedIds.size)} user
+            {selectedIds.size === 1 ? '' : 's'} selected
+            <span className="font-normal text-muted-foreground">
+              {' '}
+              — selection is kept while you page and search
+            </span>
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => setTrialDialogOpen(true)}>
+              <CalendarClock className="w-4 h-4 mr-1" />
+              Extend Free Trial
+            </Button>
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <X className="w-4 h-4 mr-1" />
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-md border border-gray-200 shadow-sm">
         <Table>
           <TableHeader>
             {/* Row 1 — top-level headers; grouped columns use colSpan, fixed columns use rowSpan */}
             <TableRow className="bg-muted">
+              <TableHead rowSpan={2} className="w-10 align-middle">
+                <Checkbox
+                  aria-label="Select all free-plan users on this page"
+                  checked={
+                    pageAllSelected
+                      ? true
+                      : pageSelectedCount > 0
+                        ? 'indeterminate'
+                        : false
+                  }
+                  disabled={selectablePageUsers.length === 0}
+                  onCheckedChange={(v) => togglePage(v === true)}
+                />
+              </TableHead>
               <TableHead rowSpan={2} className="w-[150px] align-middle">Name</TableHead>
               <TableHead rowSpan={2} className="align-middle">Email</TableHead>
               <TableHead rowSpan={2} className="align-middle">Role</TableHead>
               <TableHead rowSpan={2} className="align-middle">Status</TableHead>
+              <TableHead
+                rowSpan={2}
+                className="align-middle whitespace-nowrap"
+                title="Time left on the free trial. Users with no stored trial date fall back to signup + 7 days."
+              >
+                Free Trial
+              </TableHead>
               <TableHead rowSpan={2} className="align-middle">Onboarded</TableHead>
               <TableHead rowSpan={2} className="align-middle">Walkthrough</TableHead>
               <TableHead rowSpan={2} className="align-middle whitespace-nowrap">Last App Open</TableHead>
@@ -229,7 +358,7 @@ export default function UserManagment() {
             {isLoading ? (
               [...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(15)].map((_, j) => (
+                  {[...Array(17)].map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -251,6 +380,22 @@ export default function UserManagment() {
                   }
                   className="cursor-pointer hover:bg-blue-50 transition-colors"
                 >
+                  {/* stopPropagation: the whole row navigates on click. */}
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      aria-label={`Select ${user.email}`}
+                      checked={selectedIds.has(user.id)}
+                      disabled={!isGrantable(user)}
+                      title={
+                        isGrantable(user)
+                          ? undefined
+                          : user.isDeleted
+                            ? 'Deleted account — cannot be granted a trial'
+                            : 'Only FREE accounts can be granted a trial'
+                      }
+                      onCheckedChange={(v) => toggleOne(user, v === true)}
+                    />
+                  </TableCell>
                   <TableCell>
                     {user.firstName} {user.lastName}
                   </TableCell>
@@ -266,6 +411,9 @@ export default function UserManagment() {
                     >
                       {user.isActive ? 'Active' : 'Inactive'}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <TrialCell user={user} />
                   </TableCell>
                   <TableCell>
                     {user.onboardingCompleted ? (
@@ -418,7 +566,7 @@ export default function UserManagment() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={16}
+                  colSpan={18}
                   className="text-center text-muted-foreground"
                 >
                   No users found.
@@ -429,30 +577,20 @@ export default function UserManagment() {
         </Table>
       </div>
 
-      {/* Server-side pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {rangeStart}–{rangeEnd} of {formatNumber(total)}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canPrev || isLoading}
-            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-          >
-            ‹ Prev
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canNext || isLoading}
-            onClick={() => setOffset(offset + PAGE_SIZE)}
-          >
-            Next ›
-          </Button>
-        </div>
-      </div>
+      <TablePagination
+        total={total}
+        offset={offset}
+        pageSize={PAGE_SIZE}
+        disabled={isLoading}
+        onOffsetChange={setOffset}
+      />
+
+      <ExtendTrialDialog
+        open={trialDialogOpen}
+        onOpenChange={setTrialDialogOpen}
+        selected={[...selectedRows.values()]}
+        onDone={clearSelection}
+      />
     </section>
   );
 }

@@ -72,6 +72,17 @@ export interface AdminUser {
   onboardingCompleted: boolean;
   walkthroughCompleted?: number;
   walkthroughTotal?: number;
+  freeTrialEndsAt?: string | null;
+  effectiveTrialEndsAt?: string;
+  trialSource?: 'STORED' | 'FALLBACK';
+  trialActive?: boolean;
+  trialDaysRemaining?: number;
+  freeTrialResetCount?: number;
+  paymentStatus?: string | null;
+  trialGrantCount?: number;
+  trialGrantDaysTotal?: number;
+  lastTrialGrantAt?: string | null;
+
   workoutPlanUsage?: number | null;
   workoutPlanLimit?: number | null;
   mealPlanUsage?: number | null;
@@ -201,6 +212,110 @@ export interface FailedPlanGenerationsPage {
 }
 
 export interface FailedPlanGenerationFilters {
+  search?: string;
+  offset: number;
+  limit: number;
+}
+
+/* ------------------------- free trial (admin grant) ------------------------ */
+
+export type ExtendTrialOutcome =
+  | 'EXTENDED'
+  | 'EXTENDED_USAGE_CREATED'
+  | 'SKIPPED_PAID_PLAN'
+  /** Became non-FREE between the read and the write. Skipped, not fatal. */
+  | 'SKIPPED_PLAN_CHANGED'
+  | 'SKIPPED_NO_SUBSCRIPTION'
+  | 'SKIPPED_DELETED'
+  | 'SKIPPED_NOT_FOUND';
+
+export interface ExtendTrialUserResult {
+  userId: number;
+  email: string | null;
+  outcome: ExtendTrialOutcome;
+  planName: string | null;
+  paymentStatus: string | null;
+  previousTrialEndsAt: string | null;
+  previousEffectiveTrialEndsAt: string | null;
+  newTrialEndsAt: string | null;
+  wasExpired: boolean | null;
+  /** True when the grant landed EARLIER than the trial the user already had. */
+  shortened: boolean;
+  quotaReset: boolean;
+  previousMealPlanUsage: number | null;
+  previousWorkoutPlanUsage: number | null;
+  reason: string | null;
+}
+
+export interface ExtendTrialResult {
+  batchId: string;
+  /** True when this request had already been applied and nothing changed. */
+  replayed: boolean;
+  grantedAt: string;
+  days: number;
+  newTrialEndsAt: string;
+  resetQuota: boolean;
+  grantedBy: { adminId: number; email: string };
+  summary: {
+    requested: number;
+    unique: number;
+    extended: number;
+    skipped: number;
+    quotaResets: number;
+    shortened: number;
+    usageRowsCreated: number;
+  };
+  results: ExtendTrialUserResult[];
+}
+
+export interface ExtendTrialPayload {
+  userIds: number[];
+  days: number;
+  resetQuota: boolean;
+  /** Idempotency key — the same value can never grant twice. */
+  requestId: string;
+}
+
+/** Hard cap enforced by the API's @ArrayMaxSize — mirrored here for the UI. */
+export const MAX_TRIAL_GRANT_USERS = 500;
+
+export interface FreeTrialGrantEntry {
+  id: number;
+  /** ADMIN_GRANT or AUTO_RESET_6_MONTH. */
+  source: string;
+  days: number;
+  grantedAt: string;
+  newTrialEndsAt: string;
+  previousTrialEndsAt: string | null;
+  wasExpired: boolean;
+  quotaReset: boolean;
+  grantedByEmail: string | null;
+}
+
+export interface FreeTrialGrantUserRow {
+  userId: number;
+  name: string;
+  email: string;
+  planName: string | null;
+  effectiveTrialEndsAt: string;
+  trialActive: boolean;
+  trialDaysRemaining: number;
+  totalGrants: number;
+  adminGrants: number;
+  autoResets: number;
+  totalDays: number;
+  lastGrantedAt: string;
+  /** Newest first. */
+  grants: FreeTrialGrantEntry[];
+}
+
+export interface FreeTrialGrantsPage {
+  items: FreeTrialGrantUserRow[];
+  total: number;
+  truncated: boolean;
+}
+
+export interface FreeTrialGrantFilters {
   search?: string;
   offset: number;
   limit: number;

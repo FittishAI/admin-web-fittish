@@ -19,6 +19,7 @@ import { useGetFailedPlanGenerations } from '@/hooks/admin/useGetFailedPlanGener
 import type { FailedPlanGeneration } from '@/lib/types';
 import { API_URL } from '@/constants';
 import { formatDate } from '@/lib/format';
+import TablePagination from '@/components/dashboard/TablePagination';
 
 const PAGE_SIZE = 20;
 const COLUMN_COUNT = 8;
@@ -87,11 +88,6 @@ export default function PlanGenerationsTable() {
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
-
-  const rangeStart = total === 0 ? 0 : Math.min(offset + 1, total);
-  const rangeEnd = Math.min(offset + PAGE_SIZE, total);
-  const canPrev = offset > 0;
-  const canNext = offset + PAGE_SIZE < total;
 
   return (
     <section className="p-6 space-y-6">
@@ -230,31 +226,13 @@ export default function PlanGenerationsTable() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {total === 0
-            ? 'No results'
-            : `Showing ${rangeStart}-${rangeEnd} of ${total}`}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canPrev}
-            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-          >
-            Prev
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canNext}
-            onClick={() => setOffset(offset + PAGE_SIZE)}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <TablePagination
+        total={total}
+        offset={offset}
+        pageSize={PAGE_SIZE}
+        disabled={isLoading}
+        onOffsetChange={setOffset}
+      />
     </section>
   );
 }

@@ -34,7 +34,6 @@ export default function EditUser() {
     age: '',
     height: '',
     weight: '',
-    role: 'USER',
     isActive: 'true',
   });
 
@@ -47,7 +46,6 @@ export default function EditUser() {
         age: user.age != null ? String(user.age) : '',
         height: user.height?.toString() || '',
         weight: user.weight?.toString() || '',
-        role: user.role || 'USER',
         isActive: user.isActive ? 'true' : 'false',
       });
     }
@@ -68,19 +66,18 @@ export default function EditUser() {
           age: form.age ? parseInt(form.age, 10) : undefined,
           height: form.height || undefined,
           weight: form.weight || undefined,
-          role: form.role,
           isActive: form.isActive === 'true',
         },
       },
       {
         onSuccess: () => {
-          toast.success('User updated successfully');
+          toast.success('Success', {
+            description: 'User updated successfully.',
+          });
           router.push('/dashboard/users');
         },
         onError: (err: any) => {
-          toast.error('Failed to update user', {
-            description: err.message || 'Something went wrong',
-          });
+          toast.error(err.message || 'Could not update the user.');
         },
       }
     );
@@ -152,18 +149,6 @@ export default function EditUser() {
                 value={form.weight}
                 onChange={(e) => handleChange('weight', e.target.value)}
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={form.role} onValueChange={(value) => handleChange('role', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="USER">User</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label>Status</Label>

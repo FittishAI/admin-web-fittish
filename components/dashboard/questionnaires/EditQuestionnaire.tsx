@@ -167,15 +167,15 @@ export default function EditQuestion() {
 
     editQuestion(payload, {
       onSuccess: () => {
-        toast.success("Question updated successfully");
+        toast.success("Success", {
+          description: "Question updated successfully.",
+        });
         setTimeout(() => {
           router.back();
         }, 1500);
       },
       onError: (err: any) => {
-        toast.error("Failed to update question", {
-          description: err.message || "Unexpected error",
-        });
+        toast.error(err.message || "Could not update the question.");
       },
     });
   };
@@ -420,7 +420,9 @@ export default function EditQuestion() {
               size="icon"
               onClick={() => {
                 setNextQuestion(null);
-                toast.success("Next question removed");
+                toast.success("Success", {
+                  description: "Next question removed.",
+                });
               }}
               className="text-red-500"
             >
@@ -435,7 +437,9 @@ export default function EditQuestion() {
                   ...emptyQuestion(),
                   categoryId: questionData.categoryId,
                 });
-                toast.success("Next question added");
+                toast.success("Success", {
+                  description: "Next question added.",
+                });
               }}
             >
               <PlusCircle className="mr-1 h-4 w-4" />

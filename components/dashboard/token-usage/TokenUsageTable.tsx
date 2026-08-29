@@ -32,6 +32,7 @@ import {
 import { useGetTokenUsage } from '@/hooks/admin/useGetTokenUsage';
 import StatTile from '@/components/dashboard/StatTile';
 import { formatDate, formatNumber, formatUsd } from '@/lib/format';
+import TablePagination from '@/components/dashboard/TablePagination';
 import {
   TOKEN_USAGE_ACTIONS,
   TokenUsageAction,
@@ -98,11 +99,6 @@ export default function TokenUsageTable() {
   const totals = data?.totals;
   const items: TokenUsageRow[] = data?.items ?? [];
   const total = data?.total ?? 0;
-
-  const rangeStart = total === 0 ? 0 : Math.min(offset + 1, total);
-  const rangeEnd = Math.min(offset + PAGE_SIZE, total);
-  const canPrev = offset > 0;
-  const canNext = offset + PAGE_SIZE < total;
 
   return (
     <section className="p-6 space-y-6">
@@ -374,31 +370,13 @@ export default function TokenUsageTable() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {total === 0
-            ? 'No results'
-            : `Showing ${rangeStart}–${rangeEnd} of ${total}`}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canPrev}
-            onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
-          >
-            ‹ Prev
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canNext}
-            onClick={() => setOffset((o) => o + PAGE_SIZE)}
-          >
-            Next ›
-          </Button>
-        </div>
-      </div>
+      <TablePagination
+        total={total}
+        offset={offset}
+        pageSize={PAGE_SIZE}
+        disabled={isLoading}
+        onOffsetChange={setOffset}
+      />
     </section>
   );
 }

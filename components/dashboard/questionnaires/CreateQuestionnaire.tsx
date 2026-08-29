@@ -173,16 +173,16 @@ export default function CreateQuestion() {
 
     createQuestion(payload, {
       onSuccess: () => {
-        toast.success("Question created successfully");
+        toast.success("Success", {
+          description: "Question created successfully.",
+        });
         setTimeout(() => {
           router.back();
         }, 1500);
       },
 
       onError: (err: any) => {
-        toast.error("Failed to create question", {
-          description: err.message || "Unexpected error",
-        });
+        toast.error(err.message || "Could not create the question.");
       },
     });
   };
@@ -408,7 +408,9 @@ export default function CreateQuestion() {
               size="icon"
               onClick={() => {
                 setNextQuestion(null);
-                toast.success("Next question removed");
+                toast.success("Success", {
+                  description: "Next question removed.",
+                });
               }}
               className="text-red-500"
             >
@@ -423,7 +425,9 @@ export default function CreateQuestion() {
                   ...emptyQuestion(),
                   categoryId: questionData.categoryId,
                 });
-                toast.success("Next question added");
+                toast.success("Success", {
+                  description: "Next question added.",
+                });
               }}
             >
               <PlusCircle className="mr-1 h-4 w-4" />

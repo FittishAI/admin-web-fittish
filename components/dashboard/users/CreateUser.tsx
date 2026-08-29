@@ -58,15 +58,15 @@ export default function CreateUser() {
       },
       {
         onSuccess: () => {
-          toast.success('User created successfully');
+          toast.success('Success', {
+            description: 'User created successfully.',
+          });
           setTimeout(() => {
             router.back();
           }, 1500);
         },
         onError: (err: any) => {
-          toast.error('Error creating user', {
-            description: err.message || 'Unexpected error occurred',
-          });
+          toast.error(err.message || 'Could not create the user.');
         },
       }
     );
