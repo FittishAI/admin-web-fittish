@@ -66,6 +66,23 @@ export const formatUtcDayShort = (day: string): string =>
 export const formatUtcDayLong = (day: string): string =>
   formatUtcDay(day, { month: 'long', day: 'numeric', year: 'numeric' });
 
+
+const NEVER_EXPIRES_YEAR = 9999;
+
+/**
+ * An expiry timestamp as a date — or the word "Lifetime".
+ *
+ * Rendering the sentinel with {@link formatDate} would put "Dec 31, 9999" on
+ * screen, which reads as a data bug rather than as a deliberate forever-grant.
+ */
+export function formatEntitlementExpiry(iso?: string | null): string {
+  if (!iso) return EM_DASH;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return EM_DASH;
+  if (d.getUTCFullYear() >= NEVER_EXPIRES_YEAR) return 'Lifetime';
+  return formatDate(iso);
+}
+
 /* ------------------------------ date & time inputs ------------------------ */
 
 const pad2 = (n: number) => String(n).padStart(2, '0');

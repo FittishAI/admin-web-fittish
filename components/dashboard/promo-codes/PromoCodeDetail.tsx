@@ -46,18 +46,21 @@ import {
   RedemptionStatusBadge,
 } from '@/components/dashboard/promo-codes/PromoBadges';
 import {
-  durationLabel,
-  formatEntitlementExpiry,
-  promotionTypeLabel,
-} from '@/lib/promo';
-import { REDEMPTION_STATUS_FILTERS } from '@/constants/promo';
+  DURATION_LABELS,
+  PROMOTION_TYPE_LABELS,
+  REDEMPTION_STATUS_FILTERS,
+} from '@/constants/promo';
 import { usePagination } from '@/hooks/useTableControls';
 import { useDeactivatePromotion } from '@/hooks/admin/useDeactivatePromotion';
 import { useGetPromotionAnalytics } from '@/hooks/admin/useGetPromotionAnalytics';
 import { useGetPromotionDetail } from '@/hooks/admin/useGetPromotionDetail';
 import { useGetPromotionRedemptions } from '@/hooks/admin/useGetPromotionRedemptions';
 import { downloadFile, filenameSlug } from '@/lib/csv';
-import { formatDate, formatNumber } from '@/lib/format';
+import {
+  formatDate,
+  formatEntitlementExpiry,
+  formatNumber,
+} from '@/lib/format';
 import type { PromoRedemptionStatus } from '@/lib/types';
 
 const COLUMN_COUNT = 6;
@@ -161,7 +164,7 @@ export default function PromoCodeDetail() {
               <PromotionStatusBadge status={promo.status} />
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {promotionTypeLabel(promo.type)} ·{' '}
+              {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type} ·{' '}
               {promo.type === 'CUSTOM' ? (
                 <>
                   <span className="font-mono font-semibold text-slate-800">
@@ -172,7 +175,7 @@ export default function PromoCodeDetail() {
               ) : (
                 <>{formatNumber(promo.codesCount)} codes · </>
               )}
-              {durationLabel(promo.duration)} of premium
+              {DURATION_LABELS[promo.duration] ?? promo.duration} of premium
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
               Start date {formatDate(promo.startAt)} · End date{' '}
@@ -350,7 +353,7 @@ export default function PromoCodeDetail() {
                       {formatEntitlementExpiry(r.entitlementExpiresAt)}
                     </TableCell>
                     <TableCell className="text-sm text-slate-600 whitespace-nowrap">
-                      {durationLabel(r.durationAtRedemption)}
+                      {DURATION_LABELS[r.durationAtRedemption] ?? r.durationAtRedemption}
                     </TableCell>
                   </TableRow>
                 ))

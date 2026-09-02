@@ -25,8 +25,11 @@ import {
 } from '@/components/ui/table';
 import TablePagination from '@/components/dashboard/TablePagination';
 import { PromotionStatusBadge } from '@/components/dashboard/promo-codes/PromoBadges';
-import { durationLabel, promotionTypeLabel } from '@/lib/promo';
-import { PROMOTION_STATUS_FILTERS } from '@/constants/promo';
+import {
+  DURATION_LABELS,
+  PROMOTION_STATUS_FILTERS,
+  PROMOTION_TYPE_LABELS,
+} from '@/constants/promo';
 import { useTableControls } from '@/hooks/useTableControls';
 import { useGetPromotions } from '@/hooks/admin/useGetPromotions';
 import { downloadFile, filenameSlug } from '@/lib/csv';
@@ -43,14 +46,14 @@ const CodeCell = ({ promo }: { promo: PromotionListItem }) =>
         {promo.code}
       </span>
       <span className="block text-xs text-muted-foreground">
-        {promotionTypeLabel(promo.type)}
+        {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type}
       </span>
     </span>
   ) : (
     <span className="text-sm text-slate-700">
       {formatNumber(promo.codesCount)} codes
       <span className="block text-xs text-muted-foreground">
-        {promotionTypeLabel(promo.type)}
+        {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type}
       </span>
     </span>
   );
@@ -225,7 +228,7 @@ export default function PromoCodesTable() {
                     <CodeCell promo={promo} />
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-slate-700">
-                    {durationLabel(promo.duration)}
+                    {DURATION_LABELS[promo.duration] ?? promo.duration}
                   </TableCell>
                   <TableCell>
                     <UsageCell promo={promo} />
