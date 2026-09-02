@@ -1,6 +1,6 @@
 
 import type {
-  PromoProductType,
+  PromoBasisPlan,
   PromoRedemptionStatus,
   PromotionStatus,
   PromotionType,
@@ -14,12 +14,12 @@ export const PROMOTION_TYPE_LABELS: Record<PromotionType, string> = {
 };
 
 
-export const PRODUCT_TYPE_LABELS: Record<PromoProductType, string> = {
+export const PRODUCT_TYPE_LABELS: Record<PromoBasisPlan, string> = {
   MONTHLY: 'Monthly',
   YEARLY: 'Yearly',
 };
 
-export const SELECTABLE_PRODUCT_TYPES: PromoProductType[] = ['MONTHLY', 'YEARLY'];
+export const SELECTABLE_PRODUCT_TYPES: PromoBasisPlan[] = ['MONTHLY', 'YEARLY'];
 
 export const PROMOTION_STATUS_LABELS: Record<PromotionStatus, string> = {
   LIVE: 'Live',

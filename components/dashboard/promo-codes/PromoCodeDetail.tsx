@@ -147,7 +147,9 @@ export default function PromoCodeDetail() {
     );
   }
 
-  const totals = analytics?.totals;
+  const granted = analytics?.granted ?? promo.grantedCount;
+  const pending = analytics?.pending ?? promo.pendingCount;
+  const failed = analytics?.failed ?? promo.failedCount;
   const items = redemptions?.items ?? [];
 
   return (
@@ -169,7 +171,7 @@ export default function PromoCodeDetail() {
               {promo.type === 'CUSTOM' ? (
                 <>
                   <span className="font-mono font-semibold text-slate-800">
-                    {promo.code}
+                    {promo.customCode}
                   </span>{' '}
                   ·{' '}
                 </>
@@ -184,14 +186,13 @@ export default function PromoCodeDetail() {
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
               Product type{' '}
-              {PRODUCT_TYPE_LABELS[promo.productType] ?? promo.productType} —
+              {PRODUCT_TYPE_LABELS[promo.basisPlan] ?? promo.basisPlan} —
               redeemers get that plan&rsquo;s usage allowance
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Created by {promo.createdByEmail} on {formatDate(promo.createdAt)}
               {promo.deactivatedAt &&
-                ` · deactivated ${formatDate(promo.deactivatedAt)}${
-                  promo.deactivatedByEmail ? ` by ${promo.deactivatedByEmail}` : ''
+                ` · deactivated ${formatDate(promo.deactivatedAt)}${promo.deactivatedByEmail ? ` by ${promo.deactivatedByEmail}` : ''
                 }`}
             </p>
           </div>
@@ -228,31 +229,31 @@ export default function PromoCodeDetail() {
         />
         <StatTile
           label="Capacity"
-          value={totals?.capacity ?? promo.capacity}
+          value={analytics?.capacity ?? promo.capacity}
           icon={CheckCircle2}
           loading={analyticsLoading}
         />
         <StatTile
           label="Unique users"
-          value={totals?.uniqueUsers ?? 0}
+          value={analytics?.uniqueUsers ?? 0}
           icon={Users}
           loading={analyticsLoading}
         />
         <StatTile
           label="Failed"
-          value={totals?.failed ?? promo.failed}
+          value={failed}
           icon={XCircle}
           loading={analyticsLoading}
         />
       </div>
 
-      {(totals?.pending ?? promo.pending) > 0 && (
+      {pending > 0 && (
         <p className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>
-            <strong>{formatNumber(totals?.pending ?? promo.pending)}</strong>{' '}
+            <strong>{formatNumber(pending)}</strong>{' '}
             redemption
-            {(totals?.pending ?? promo.pending) === 1 ? ' is' : 's are'} still
+            {pending === 1 ? ' is' : 's are'} still
             pending — RevenueCat never confirmed the grant. Their code slots stay
             held. These resolve when the user retries or when RevenueCat’s
             webhook reconciles them.
@@ -261,7 +262,7 @@ export default function PromoCodeDetail() {
       )}
 
       <PromoRedemptionsChart
-        points={analytics?.daily ?? []}
+        points={analytics?.timeseries ?? []}
         windowStart={promo.startAt}
         windowEnd={promo.endAt}
         loading={analyticsLoading}
@@ -407,8 +408,8 @@ export default function PromoCodeDetail() {
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
               <span>
                 The{' '}
-                <strong>{formatNumber(totals?.granted ?? promo.granted)}</strong>{' '}
-                {(totals?.granted ?? promo.granted) === 1 ? 'person' : 'people'}{' '}
+                <strong>{formatNumber(granted)}</strong>{' '}
+                {granted === 1 ? 'person' : 'people'}{' '}
                 who already redeemed it <strong>keep their premium access</strong>{' '}
                 until it expires. Deactivating does not take it back.
               </span>

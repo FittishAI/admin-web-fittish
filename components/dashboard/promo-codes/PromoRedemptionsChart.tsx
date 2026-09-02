@@ -20,16 +20,14 @@ import {
   CHART_GRID,
   CHART_TICK,
 } from '@/constants/colors';
+import type { PromoDailyPoint } from '@/lib/types';
 
 const MAX_DAYS = 400;
 
 const DAY_MS = 86_400_000;
 
 
-export interface PromoRedemptionPoint {
-  day: string;
-  count: number;
-}
+export type PromoRedemptionPoint = PromoDailyPoint;
 
 
 export function utcDayOf(iso: string): string {
@@ -65,7 +63,7 @@ export default function PromoRedemptionsChart({
   loading?: boolean;
 }) {
   const data = useMemo(() => {
-    const counts = new Map(points.map((p) => [p.day, p.count]));
+    const counts = new Map(points.map((p) => [p.date, p.count]));
     const today = new Date().toISOString().slice(0, 10);
     const start = utcDayOf(windowStart);
     const endOfWindow = utcDayOf(windowEnd);
@@ -73,10 +71,10 @@ export default function PromoRedemptionsChart({
 
     const days = utcDayRange(start, end);
     if (!days.length) {
-      return [...points].sort((a, b) => a.day.localeCompare(b.day));
+      return [...points].sort((a, b) => a.date.localeCompare(b.date));
     }
 
-    return days.map((day) => ({ day, count: counts.get(day) ?? 0 }));
+    return days.map((date) => ({ date, count: counts.get(date) ?? 0 }));
   }, [points, windowStart, windowEnd]);
 
   const tickInterval = Math.max(0, Math.floor(data.length / 6) - 1);
@@ -98,7 +96,7 @@ export default function PromoRedemptionsChart({
               >
                 <CartesianGrid vertical={false} stroke={CHART_GRID} strokeWidth={1} />
                 <XAxis
-                  dataKey="day"
+                  dataKey="date"
                   tickFormatter={formatUtcDayShort}
                   interval={tickInterval}
                   tickLine={false}

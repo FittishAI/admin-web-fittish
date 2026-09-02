@@ -42,7 +42,7 @@ const CodeCell = ({ promo }: { promo: PromotionListItem }) =>
   promo.type === 'CUSTOM' ? (
     <span>
       <span className="font-mono text-sm font-semibold tracking-wide text-slate-800">
-        {promo.code}
+        {promo.customCode}
       </span>
       <span className="block text-xs text-muted-foreground">
         {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type}
@@ -71,9 +71,9 @@ const UsageCell = ({ promo }: { promo: PromotionListItem }) => {
           style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>
-      {promo.failed > 0 && (
+      {promo.failedCount > 0 && (
         <span className="block text-xs text-red-600 mt-1">
-          {formatNumber(promo.failed)} failed
+          {formatNumber(promo.failedCount)} failed
         </span>
       )}
     </div>

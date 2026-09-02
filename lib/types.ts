@@ -324,7 +324,7 @@ export interface FreeTrialGrantFilters {
 export type PromotionType = 'CUSTOM' | 'ONE_TIME';
 
 
-export type PromoProductType = 'MONTHLY' | 'YEARLY';
+export type PromoBasisPlan = 'MONTHLY' | 'YEARLY';
 
 export type PromotionStatus = 'DEACTIVATED' | 'SCHEDULED' | 'LIVE' | 'FINISHED';
 
@@ -337,22 +337,22 @@ export interface PromotionListItem {
   /** Days of premium granted on redemption. */
   durationDays: number;
   /** Quota tier applied for the length of the grant. */
-  productType: PromoProductType;
+  basisPlan: PromoBasisPlan;
   /** Full ISO instant with an explicit offset — never a bare calendar day. */
   startAt: string;
   endAt: string;
   status: PromotionStatus;
   isActive: boolean;
   /** CUSTOM: the single shareable code. ONE_TIME: null — see `codesCount`. */
-  code: string | null;
+  customCode: string | null;
   codesCount: number;
   /** Σ maxRedemptions across the promotion's codes. */
   capacity: number;
   /** Σ redeemedCount — the authoritative slot counter, not a COUNT of rows. */
   redeemed: number;
-  granted: number;
-  pending: number;
-  failed: number;
+  grantedCount: number;
+  pendingCount: number;
+  failedCount: number;
   createdByEmail: string;
   createdAt: string;
 }
@@ -381,7 +381,7 @@ export interface CreatePromotionPayload {
   /** Days of premium granted on redemption. */
   durationDays: number;
   /** Quota tier applied for the length of the grant. */
-  productType: PromoProductType;
+  basisPlan: PromoBasisPlan;
   startAt: string;
   endAt: string;
   code?: string;
@@ -402,21 +402,20 @@ export interface CreatePromotionResult {
   replayed: boolean;
 }
 
-/** One UTC day bucket. `day` is a bare "YYYY-MM-DD" — see PromoRedemptionsChart. */
+/** One UTC day bucket. `date` is a bare "YYYY-MM-DD" — see PromoRedemptionsChart. */
 export interface PromoDailyPoint {
-  day: string;
+  date: string;
   count: number;
 }
 
+/** Counts are flat on the response, not nested under a `totals` object. */
 export interface PromotionAnalytics {
-  totals: {
-    granted: number;
-    pending: number;
-    failed: number;
-    capacity: number;
-    uniqueUsers: number;
-  };
-  daily: PromoDailyPoint[];
+  granted: number;
+  pending: number;
+  failed: number;
+  capacity: number;
+  uniqueUsers: number;
+  timeseries: PromoDailyPoint[];
 }
 
 export interface PromotionRedemptionRow {
@@ -432,7 +431,7 @@ export interface PromotionRedemptionRow {
   status: PromoRedemptionStatus;
   redeemedAt: string;
   grantedAt: string | null;
-  /** Full ISO instant; year 9999 means lifetime. Null while PENDING or FAILED. */
+  /** Full ISO instant. Null while PENDING or FAILED — nothing was granted. */
   entitlementExpiresAt: string | null;
   rcError: string | null;
 }

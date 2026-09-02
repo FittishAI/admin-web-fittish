@@ -30,7 +30,7 @@ import {
 import { formatDays } from '@/lib/format';
 import type {
   CreatePromotionPayload,
-  PromoProductType,
+  PromoBasisPlan,
   PromotionType,
 } from '@/lib/types';
 
@@ -40,7 +40,7 @@ export default function CreatePromoCode() {
   const [name, setName] = useState('');
   const [type, setType] = useState<PromotionType>('CUSTOM');
   const [durationDays, setDurationDays] = useState('30');
-  const [productType, setProductType] = useState<PromoProductType>('MONTHLY');
+  const [productType, setProductType] = useState<PromoBasisPlan>('MONTHLY');
   const [code, setCode] = useState('');
   const [maxRedemptions, setMaxRedemptions] = useState('100');
   const [codeCount, setCodeCount] = useState('100');
@@ -100,7 +100,8 @@ export default function CreatePromoCode() {
       name: name.trim(),
       type,
       durationDays: durationDaysNum,
-      productType,
+      // The API calls this `basisPlan`; the form keeps the screen's wording.
+      basisPlan: productType,
       startAt: startIso,
       endAt: endIso,
       ...(type === 'CUSTOM'
@@ -353,7 +354,7 @@ export default function CreatePromoCode() {
             <Label>Product type</Label>
             <RadioGroup
               value={productType}
-              onValueChange={(v) => setProductType(v as PromoProductType)}
+              onValueChange={(v) => setProductType(v as PromoBasisPlan)}
               className="flex flex-row flex-wrap gap-6"
             >
               {SELECTABLE_PRODUCT_TYPES.map((t) => (
