@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   AlertTriangle,
@@ -24,11 +24,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import TablePagination from '@/components/dashboard/TablePagination';
+import { useTableControls } from '@/hooks/useTableControls';
 import { useGetFreeTrialGrants } from '@/hooks/admin/useGetFreeTrialGrants';
 import { formatDate, formatNumber } from '@/lib/format';
 import type { FreeTrialGrantEntry, FreeTrialGrantUserRow } from '@/lib/types';
 
-const PAGE_SIZE = 20;
 const COLUMN_COUNT = 6;
 
 const isAdminGrant = (g: FreeTrialGrantEntry) => g.source === 'ADMIN_GRANT';
@@ -112,22 +112,13 @@ const GrantHistory = ({ row }: { row: FreeTrialGrantUserRow }) => (
 
 export default function FreeTrialGrantsTable() {
   const router = useRouter();
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [offset, setOffset] = useState(0);
+  const { searchInput, setSearchInput, search, offset, setOffset, pageSize } =
+    useTableControls();
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setSearch(searchInput.trim());
-      setOffset(0);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [searchInput]);
-
   const filters = useMemo(
-    () => ({ search, offset, limit: PAGE_SIZE }),
-    [search, offset]
+    () => ({ search, offset, limit: pageSize }),
+    [search, offset, pageSize]
   );
 
   const { data, isLoading, isError, error } = useGetFreeTrialGrants(filters);
@@ -305,7 +296,7 @@ export default function FreeTrialGrantsTable() {
       <TablePagination
         total={total}
         offset={offset}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         disabled={isLoading}
         onOffsetChange={setOffset}
       />

@@ -320,3 +320,132 @@ export interface FreeTrialGrantFilters {
   offset: number;
   limit: number;
 }
+
+export type PromotionType = 'CUSTOM' | 'ONE_TIME';
+
+
+export type PromoDuration =
+  | 'daily'
+  | 'three_day'
+  | 'weekly'
+  | 'monthly'
+  | 'two_month'
+  | 'three_month'
+  | 'six_month'
+  | 'yearly'
+  | 'lifetime';
+
+export type PromotionStatus = 'DEACTIVATED' | 'SCHEDULED' | 'LIVE' | 'FINISHED';
+
+export type PromoRedemptionStatus = 'PENDING' | 'GRANTED' | 'FAILED';
+
+export interface PromotionListItem {
+  id: number;
+  name: string;
+  type: PromotionType;
+  duration: PromoDuration;
+  /** Full ISO instant with an explicit offset — never a bare calendar day. */
+  startAt: string;
+  endAt: string;
+  status: PromotionStatus;
+  isActive: boolean;
+  /** CUSTOM: the single shareable code. ONE_TIME: null — see `codesCount`. */
+  code: string | null;
+  codesCount: number;
+  /** Σ maxRedemptions across the promotion's codes. */
+  capacity: number;
+  /** Σ redeemedCount — the authoritative slot counter, not a COUNT of rows. */
+  redeemed: number;
+  granted: number;
+  pending: number;
+  failed: number;
+  createdByEmail: string;
+  createdAt: string;
+}
+
+export interface PromotionsPage {
+  items: PromotionListItem[];
+  total: number;
+}
+
+export interface PromotionFilters {
+  /** Matches promotion name, or an exact code. */
+  search?: string;
+  status?: PromotionStatus | 'ALL';
+  offset: number;
+  limit: number;
+}
+
+export interface PromotionDetail extends PromotionListItem {
+  deactivatedAt: string | null;
+  deactivatedByEmail: string | null;
+}
+
+export interface CreatePromotionPayload {
+  name: string;
+  type: PromotionType;
+  duration: PromoDuration;
+  startAt: string;
+  endAt: string;
+  code?: string;
+  /** CUSTOM only. */
+  maxRedemptions?: number;
+  /** ONE_TIME only. */
+  codeCount?: number;
+  /** Idempotency key — the same value can never create twice. */
+  requestId: string;
+}
+
+export interface CreatePromotionResult {
+  id: number;
+  name: string;
+  type: PromotionType;
+  codesCount: number;
+  /** True when this requestId had already been applied; nothing was created again. */
+  replayed: boolean;
+}
+
+/** One UTC day bucket. `day` is a bare "YYYY-MM-DD" — see PromoRedemptionsChart. */
+export interface PromoDailyPoint {
+  day: string;
+  count: number;
+}
+
+export interface PromotionAnalytics {
+  totals: {
+    granted: number;
+    pending: number;
+    failed: number;
+    capacity: number;
+    uniqueUsers: number;
+  };
+  daily: PromoDailyPoint[];
+}
+
+export interface PromotionRedemptionRow {
+  id: number;
+  userId: number;
+  /** Live join; falls back to the snapshot when the user has been deleted. */
+  userName: string | null;
+  userEmail: string;
+  userDeleted: boolean;
+  codeValue: string;
+  durationAtRedemption: PromoDuration;
+  status: PromoRedemptionStatus;
+  redeemedAt: string;
+  grantedAt: string | null;
+  /** Full ISO instant; year 9999 means lifetime. Null while PENDING or FAILED. */
+  entitlementExpiresAt: string | null;
+  rcError: string | null;
+}
+
+export interface PromotionRedemptionsPage {
+  items: PromotionRedemptionRow[];
+  total: number;
+}
+
+export interface PromotionRedemptionFilters {
+  status?: PromoRedemptionStatus | 'ALL';
+  offset: number;
+  limit: number;
+}

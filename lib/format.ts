@@ -66,6 +66,32 @@ export const formatUtcDayShort = (day: string): string =>
 export const formatUtcDayLong = (day: string): string =>
   formatUtcDay(day, { month: 'long', day: 'numeric', year: 'numeric' });
 
+/* ------------------------------ date & time inputs ------------------------ */
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+
+export function combineDateTime(date: string, time: string): string {
+  return date && time ? `${date}T${time}` : '';
+}
+
+
+export function localInputToIso(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+export function todayForInput(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+export function nowForTimeInput(): string {
+  const d = new Date();
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
 /* --------------------------------- numbers -------------------------------- */
 
 /** Thousands-separated, in the viewer's locale — "1,234,567". */
