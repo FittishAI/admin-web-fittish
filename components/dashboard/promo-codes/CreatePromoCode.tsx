@@ -10,13 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useCreatePromotion } from '@/hooks/admin/useCreatePromotion';
 import { downloadFile, filenameSlug } from '@/lib/csv';
 import {
@@ -28,14 +21,16 @@ import {
 import { DIGITS_ONLY, newRequestId } from '@/lib/utils';
 import {
   CUSTOM_CODE_PATTERN,
-  DURATION_LABELS,
   MAX_CUSTOM_REDEMPTIONS,
   MAX_ONE_TIME_CODES,
-  SELECTABLE_DURATIONS,
+  MAX_PROMO_DAYS,
+  PRODUCT_TYPE_LABELS,
+  SELECTABLE_PRODUCT_TYPES,
 } from '@/constants/promo';
+import { formatDays } from '@/lib/format';
 import type {
   CreatePromotionPayload,
-  PromoDuration,
+  PromoProductType,
   PromotionType,
 } from '@/lib/types';
 
@@ -44,7 +39,8 @@ export default function CreatePromoCode() {
 
   const [name, setName] = useState('');
   const [type, setType] = useState<PromotionType>('CUSTOM');
-  const [duration, setDuration] = useState<PromoDuration>('monthly');
+  const [durationDays, setDurationDays] = useState('30');
+  const [productType, setProductType] = useState<PromoProductType>('MONTHLY');
   const [code, setCode] = useState('');
   const [maxRedemptions, setMaxRedemptions] = useState('100');
   const [codeCount, setCodeCount] = useState('100');
@@ -72,6 +68,13 @@ export default function CreatePromoCode() {
     maxRedemptions !== '' &&
     maxRedemptionsNum >= 1 &&
     maxRedemptionsNum <= MAX_CUSTOM_REDEMPTIONS;
+  const durationDaysNum = Number(durationDays);
+  const durationValid =
+    DIGITS_ONLY.test(durationDays) &&
+    durationDays !== '' &&
+    durationDaysNum >= 1 &&
+    durationDaysNum <= MAX_PROMO_DAYS;
+
   const codeCountNum = Number(codeCount);
   const codeCountValid =
     DIGITS_ONLY.test(codeCount) &&
@@ -88,14 +91,16 @@ export default function CreatePromoCode() {
   const typeValid =
     type === 'CUSTOM' ? codeValid && maxRedemptionsValid : codeCountValid;
 
-  const canSubmit = nameValid && typeValid && windowValid && !isPending;
+  const canSubmit =
+    nameValid && typeValid && durationValid && windowValid && !isPending;
 
   const payload = useMemo((): CreatePromotionPayload | null => {
     if (!startIso || !endIso) return null;
     return {
       name: name.trim(),
       type,
-      duration,
+      durationDays: durationDaysNum,
+      productType,
       startAt: startIso,
       endAt: endIso,
       ...(type === 'CUSTOM'
@@ -106,7 +111,8 @@ export default function CreatePromoCode() {
   }, [
     name,
     type,
-    duration,
+    durationDaysNum,
+    productType,
     startIso,
     endIso,
     code,
@@ -316,25 +322,57 @@ export default function CreatePromoCode() {
 
           <div className="space-y-2 max-w-xs">
             <Label htmlFor="promo-duration">How much premium do they get?</Label>
-            <Select
-              value={duration}
-              onValueChange={(v) => setDuration(v as PromoDuration)}
+            <div className="flex items-center gap-2">
+              <Input
+                id="promo-duration"
+                inputMode="numeric"
+                value={durationDays}
+                onChange={(e) => {
+                  if (DIGITS_ONLY.test(e.target.value)) {
+                    setDurationDays(e.target.value);
+                  }
+                }}
+                placeholder="30"
+                className="w-[120px]"
+              />
+              <span className="text-sm text-muted-foreground">days</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              1–{MAX_PROMO_DAYS.toLocaleString()} days. Counted from the moment
+              the code is redeemed, not from the start date.
+            </p>
+            {durationDays && !durationValid && (
+              <p className="text-xs text-red-600">
+                Enter a whole number of days between 1 and{' '}
+                {MAX_PROMO_DAYS.toLocaleString()}.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <Label>Product type</Label>
+            <RadioGroup
+              value={productType}
+              onValueChange={(v) => setProductType(v as PromoProductType)}
+              className="flex flex-row flex-wrap gap-6"
             >
-              <SelectTrigger id="promo-duration">
-                <SelectValue placeholder="Select duration" />
-              </SelectTrigger>
-              <SelectContent>
-                {SELECTABLE_DURATIONS.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {DURATION_LABELS[d]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {SELECTABLE_PRODUCT_TYPES.map((t) => (
+                <label
+                  key={t}
+                  htmlFor={`product-type-${t}`}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <RadioGroupItem value={t} id={`product-type-${t}`} />
+                  <span className="text-sm font-medium text-slate-800">
+                    {PRODUCT_TYPE_LABELS[t]}
+                  </span>
+                </label>
+              ))}
+            </RadioGroup>
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <Info className="w-3.5 h-3.5 mt-px shrink-0" />
-              These are the only lengths RevenueCat supports. A “30 days”
-              campaign uses 1 month.
+              The redeemer gets the plan usage allowance of the type you pick
+              here, for as long as the promotion lasts.
             </p>
           </div>
 
@@ -395,7 +433,7 @@ export default function CreatePromoCode() {
               This window controls <strong>when the code can be redeemed</strong>,
               not how long premium lasts. Someone redeeming one second before it
               closes still gets the full{' '}
-              {DURATION_LABELS[duration].toLowerCase()}.
+              {durationValid ? formatDays(durationDaysNum) : 'duration'}.
             </span>
           </p>
 

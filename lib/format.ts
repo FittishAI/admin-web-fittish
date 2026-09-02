@@ -83,6 +83,10 @@ export function formatEntitlementExpiry(iso?: string | null): string {
   return formatDate(iso);
 }
 
+/** A day count with its unit — "1 day", "30 days". */
+export const formatDays = (n: number): string =>
+  `${formatNumber(n)} ${n === 1 ? 'day' : 'days'}`;
+
 /* ------------------------------ date & time inputs ------------------------ */
 
 const pad2 = (n: number) => String(n).padStart(2, '0');

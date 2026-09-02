@@ -1,6 +1,6 @@
 
 import type {
-  PromoDuration,
+  PromoProductType,
   PromoRedemptionStatus,
   PromotionStatus,
   PromotionType,
@@ -8,35 +8,18 @@ import type {
 
 /* --------------------------------- labels --------------------------------- */
 
-export const DURATION_LABELS: Record<PromoDuration, string> = {
-  daily: '1 day',
-  three_day: '3 days',
-  weekly: '1 week',
-  monthly: '1 month (30 days)',
-  two_month: '2 months',
-  three_month: '3 months',
-  six_month: '6 months',
-  yearly: '1 year',
-  lifetime: 'Lifetime',
-};
-
-
-export const SELECTABLE_DURATIONS: PromoDuration[] = [
-  'three_day',
-  'weekly',
-  'monthly',
-  'two_month',
-  'three_month',
-  'six_month',
-  'yearly',
-  'lifetime',
-];
-
-
 export const PROMOTION_TYPE_LABELS: Record<PromotionType, string> = {
   CUSTOM: 'Custom code',
   ONE_TIME: 'One-time codes',
 };
+
+
+export const PRODUCT_TYPE_LABELS: Record<PromoProductType, string> = {
+  MONTHLY: 'Monthly',
+  YEARLY: 'Yearly',
+};
+
+export const SELECTABLE_PRODUCT_TYPES: PromoProductType[] = ['MONTHLY', 'YEARLY'];
 
 export const PROMOTION_STATUS_LABELS: Record<PromotionStatus, string> = {
   LIVE: 'Live',
@@ -106,6 +89,14 @@ export const PROMO_COPY = {
 
 
 export const LIFETIME_SENTINEL_YEAR = 9999;
+
+/**
+ * Longest grant an admin can enter, in days — ten years.
+ *
+ * A cap exists because the value is typed by hand: a stray keystroke turning 30
+ * into 300000 would hand out effectively permanent premium.
+ */
+export const MAX_PROMO_DAYS = 3650;
 
 /** Mirrors the API's @Max on `codeCount`. */
 export const MAX_ONE_TIME_CODES = 10_000;

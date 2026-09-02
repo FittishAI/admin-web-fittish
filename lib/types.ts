@@ -324,16 +324,7 @@ export interface FreeTrialGrantFilters {
 export type PromotionType = 'CUSTOM' | 'ONE_TIME';
 
 
-export type PromoDuration =
-  | 'daily'
-  | 'three_day'
-  | 'weekly'
-  | 'monthly'
-  | 'two_month'
-  | 'three_month'
-  | 'six_month'
-  | 'yearly'
-  | 'lifetime';
+export type PromoProductType = 'MONTHLY' | 'YEARLY';
 
 export type PromotionStatus = 'DEACTIVATED' | 'SCHEDULED' | 'LIVE' | 'FINISHED';
 
@@ -343,7 +334,10 @@ export interface PromotionListItem {
   id: number;
   name: string;
   type: PromotionType;
-  duration: PromoDuration;
+  /** Days of premium granted on redemption. */
+  durationDays: number;
+  /** Quota tier applied for the length of the grant. */
+  productType: PromoProductType;
   /** Full ISO instant with an explicit offset — never a bare calendar day. */
   startAt: string;
   endAt: string;
@@ -384,7 +378,10 @@ export interface PromotionDetail extends PromotionListItem {
 export interface CreatePromotionPayload {
   name: string;
   type: PromotionType;
-  duration: PromoDuration;
+  /** Days of premium granted on redemption. */
+  durationDays: number;
+  /** Quota tier applied for the length of the grant. */
+  productType: PromoProductType;
   startAt: string;
   endAt: string;
   code?: string;
@@ -430,7 +427,8 @@ export interface PromotionRedemptionRow {
   userEmail: string;
   userDeleted: boolean;
   codeValue: string;
-  durationAtRedemption: PromoDuration;
+  /** Days granted at the time of redemption — snapshot, not the current value. */
+  durationDaysAtRedemption: number;
   status: PromoRedemptionStatus;
   redeemedAt: string;
   grantedAt: string | null;

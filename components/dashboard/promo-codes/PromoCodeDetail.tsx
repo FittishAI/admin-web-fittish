@@ -46,7 +46,7 @@ import {
   RedemptionStatusBadge,
 } from '@/components/dashboard/promo-codes/PromoBadges';
 import {
-  DURATION_LABELS,
+  PRODUCT_TYPE_LABELS,
   PROMOTION_TYPE_LABELS,
   REDEMPTION_STATUS_FILTERS,
 } from '@/constants/promo';
@@ -58,6 +58,7 @@ import { useGetPromotionRedemptions } from '@/hooks/admin/useGetPromotionRedempt
 import { downloadFile, filenameSlug } from '@/lib/csv';
 import {
   formatDate,
+  formatDays,
   formatEntitlementExpiry,
   formatNumber,
 } from '@/lib/format';
@@ -175,11 +176,16 @@ export default function PromoCodeDetail() {
               ) : (
                 <>{formatNumber(promo.codesCount)} codes · </>
               )}
-              {DURATION_LABELS[promo.duration] ?? promo.duration} of premium
+              {formatDays(promo.durationDays)} of premium
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
               Start date {formatDate(promo.startAt)} · End date{' '}
               {formatDate(promo.endAt)}
+            </p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Product type{' '}
+              {PRODUCT_TYPE_LABELS[promo.productType] ?? promo.productType} —
+              redeemers get that plan&rsquo;s usage allowance
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Created by {promo.createdByEmail} on {formatDate(promo.createdAt)}
@@ -353,7 +359,7 @@ export default function PromoCodeDetail() {
                       {formatEntitlementExpiry(r.entitlementExpiresAt)}
                     </TableCell>
                     <TableCell className="text-sm text-slate-600 whitespace-nowrap">
-                      {DURATION_LABELS[r.durationAtRedemption] ?? r.durationAtRedemption}
+                      {formatDays(r.durationDaysAtRedemption)}
                     </TableCell>
                   </TableRow>
                 ))

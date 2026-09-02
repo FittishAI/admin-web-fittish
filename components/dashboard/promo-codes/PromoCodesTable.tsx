@@ -26,14 +26,13 @@ import {
 import TablePagination from '@/components/dashboard/TablePagination';
 import { PromotionStatusBadge } from '@/components/dashboard/promo-codes/PromoBadges';
 import {
-  DURATION_LABELS,
   PROMOTION_STATUS_FILTERS,
   PROMOTION_TYPE_LABELS,
 } from '@/constants/promo';
 import { useTableControls } from '@/hooks/useTableControls';
 import { useGetPromotions } from '@/hooks/admin/useGetPromotions';
 import { downloadFile, filenameSlug } from '@/lib/csv';
-import { formatDate, formatNumber } from '@/lib/format';
+import { formatDate, formatDays, formatNumber } from '@/lib/format';
 import type { PromotionListItem, PromotionStatus } from '@/lib/types';
 
 const COLUMN_COUNT = 8;
@@ -228,7 +227,7 @@ export default function PromoCodesTable() {
                     <CodeCell promo={promo} />
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-slate-700">
-                    {DURATION_LABELS[promo.duration] ?? promo.duration}
+                    {formatDays(promo.durationDays)}
                   </TableCell>
                   <TableCell>
                     <UsageCell promo={promo} />
