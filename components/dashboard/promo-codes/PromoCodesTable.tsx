@@ -26,6 +26,7 @@ import {
 import TablePagination from '@/components/dashboard/TablePagination';
 import { PromotionStatusBadge } from '@/components/dashboard/promo-codes/PromoBadges';
 import {
+  PRODUCT_TYPE_LABELS,
   PROMOTION_STATUS_FILTERS,
   PROMOTION_TYPE_LABELS,
 } from '@/constants/promo';
@@ -35,27 +36,8 @@ import { downloadFile, filenameSlug } from '@/lib/csv';
 import { formatDate, formatDays, formatNumber } from '@/lib/format';
 import type { PromotionListItem, PromotionStatus } from '@/lib/types';
 
-const COLUMN_COUNT = 8;
+const COLUMN_COUNT = 9;
 
-
-const CodeCell = ({ promo }: { promo: PromotionListItem }) =>
-  promo.type === 'CUSTOM' ? (
-    <span>
-      <span className="font-mono text-sm font-semibold tracking-wide text-slate-800">
-        {promo.customCode}
-      </span>
-      <span className="block text-xs text-muted-foreground">
-        {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type}
-      </span>
-    </span>
-  ) : (
-    <span className="text-sm text-slate-700">
-      {formatNumber(promo.codesCount)} codes
-      <span className="block text-xs text-muted-foreground">
-        {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type}
-      </span>
-    </span>
-  );
 
 const UsageCell = ({ promo }: { promo: PromotionListItem }) => {
   const pct = promo.capacity > 0 ? (promo.redeemed / promo.capacity) * 100 : 0;
@@ -63,7 +45,10 @@ const UsageCell = ({ promo }: { promo: PromotionListItem }) => {
     <div className="min-w-[110px]">
       <span className="text-sm font-medium tabular-nums text-slate-800">
         {formatNumber(promo.redeemed)}
-        <span className="text-muted-foreground"> / {formatNumber(promo.capacity)}</span>
+        <span className="text-muted-foreground">
+          {' '}
+          / {formatNumber(promo.capacity)}
+        </span>
       </span>
       <div className="mt-1 h-1.5 w-full rounded-full bg-slate-100">
         <div
@@ -144,7 +129,7 @@ export default function PromoCodesTable() {
         <div className="relative w-full max-w-md bg-white border border-gray-200 rounded-md shadow-sm">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, or paste a code..."
+            placeholder="Search by promotion name..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9"
@@ -175,7 +160,8 @@ export default function PromoCodesTable() {
           <TableHeader>
             <TableRow className="bg-muted">
               <TableHead>Promotion name</TableHead>
-              <TableHead>Code</TableHead>
+              <TableHead>Promotion type</TableHead>
+              <TableHead>Product type</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead className="whitespace-nowrap">Codes redeemed</TableHead>
               <TableHead className="whitespace-nowrap">Start date</TableHead>
@@ -219,12 +205,17 @@ export default function PromoCodesTable() {
                     <span className="font-medium text-slate-800">
                       {promo.name}
                     </span>
-                    <span className="block text-xs text-muted-foreground">
-                      by {promo.createdByEmail}
-                    </span>
                   </TableCell>
-                  <TableCell>
-                    <CodeCell promo={promo} />
+                  <TableCell className="whitespace-nowrap text-sm text-slate-700">
+                    {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type}
+                    {promo.type === 'ONE_TIME' && (
+                      <span className="block text-xs text-muted-foreground">
+                        {formatNumber(promo.codesCount)} codes
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm text-slate-700">
+                    {PRODUCT_TYPE_LABELS[promo.basisPlan] ?? promo.basisPlan}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-slate-700">
                     {formatDays(promo.durationDays)}

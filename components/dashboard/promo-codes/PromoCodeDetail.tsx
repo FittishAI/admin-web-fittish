@@ -7,14 +7,14 @@ import {
   AlertTriangle,
   ArrowLeftCircle,
   Ban,
-  CheckCircle2,
   Download,
   Ticket,
-  Users,
-  XCircle,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import StatTile from '@/components/dashboard/StatTile';
 import TablePagination from '@/components/dashboard/TablePagination';
 import PromoRedemptionsChart from '@/components/dashboard/promo-codes/PromoRedemptionsChart';
 import {
@@ -58,13 +57,14 @@ import { useGetPromotionRedemptions } from '@/hooks/admin/useGetPromotionRedempt
 import { downloadFile, filenameSlug } from '@/lib/csv';
 import {
   formatDate,
+  formatDateTime,
   formatDays,
   formatEntitlementExpiry,
   formatNumber,
 } from '@/lib/format';
 import type { PromoRedemptionStatus } from '@/lib/types';
 
-const COLUMN_COUNT = 6;
+const COLUMN_COUNT = 5;
 
 export default function PromoCodeDetail() {
   const router = useRouter();
@@ -125,8 +125,8 @@ export default function PromoCodeDetail() {
     return (
       <section className="p-6 space-y-6">
         <Skeleton className="h-9 w-64" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
@@ -152,6 +152,16 @@ export default function PromoCodeDetail() {
   const failed = analytics?.failed ?? promo.failedCount;
   const items = redemptions?.items ?? [];
 
+  const daysLeft = promo.isActive
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(promo.endAt).getTime() - Date.now()) / 86_400_000,
+        ),
+      )
+    : 0;
+
+
   return (
     <section className="p-6 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -166,35 +176,6 @@ export default function PromoCodeDetail() {
               </h2>
               <PromotionStatusBadge status={promo.status} />
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {PROMOTION_TYPE_LABELS[promo.type] ?? promo.type} ·{' '}
-              {promo.type === 'CUSTOM' ? (
-                <>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {promo.customCode}
-                  </span>{' '}
-                  ·{' '}
-                </>
-              ) : (
-                <>{formatNumber(promo.codesCount)} codes · </>
-              )}
-              {formatDays(promo.durationDays)} of premium
-            </p>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Start date {formatDate(promo.startAt)} · End date{' '}
-              {formatDate(promo.endAt)}
-            </p>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Product type{' '}
-              {PRODUCT_TYPE_LABELS[promo.basisPlan] ?? promo.basisPlan} —
-              redeemers get that plan&rsquo;s usage allowance
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Created by {promo.createdByEmail} on {formatDate(promo.createdAt)}
-              {promo.deactivatedAt &&
-                ` · deactivated ${formatDate(promo.deactivatedAt)}${promo.deactivatedByEmail ? ` by ${promo.deactivatedByEmail}` : ''
-                }`}
-            </p>
           </div>
         </div>
 
@@ -220,32 +201,94 @@ export default function PromoCodeDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatTile
-          label="Redeemed"
-          value={promo.redeemed}
-          icon={Ticket}
-          loading={analyticsLoading}
-        />
-        <StatTile
-          label="Capacity"
-          value={analytics?.capacity ?? promo.capacity}
-          icon={CheckCircle2}
-          loading={analyticsLoading}
-        />
-        <StatTile
-          label="Unique users"
-          value={analytics?.uniqueUsers ?? 0}
-          icon={Users}
-          loading={analyticsLoading}
-        />
-        <StatTile
-          label="Failed"
-          value={failed}
-          icon={XCircle}
-          loading={analyticsLoading}
-        />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Promotion Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Promotion name</Label>
+              <Input value={promo.name} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Promotion type</Label>
+              <Input
+                value={PROMOTION_TYPE_LABELS[promo.type] ?? promo.type}
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>
+                {promo.type === 'CUSTOM'
+                  ? 'How many people can use it'
+                  : 'Number of codes'}
+              </Label>
+              <Input
+                value={
+                  promo.type === 'CUSTOM'
+                    ? formatNumber(promo.capacity)
+                    : formatNumber(promo.codesCount)
+                }
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>How much premium they get</Label>
+              <Input value={formatDays(promo.durationDays)} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Product type</Label>
+              <Input
+                value={PRODUCT_TYPE_LABELS[promo.basisPlan] ?? promo.basisPlan}
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Codes redeemed</Label>
+              <Input
+                value={`${formatNumber(promo.redeemed)} of ${formatNumber(promo.capacity)}`}
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Start date and time</Label>
+              <Input value={formatDateTime(promo.startAt)} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>End date and time</Label>
+              <Input value={formatDateTime(promo.endAt)} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Days left to redeem</Label>
+              <Input
+                value={promo.isActive ? formatDays(daysLeft) : '—'}
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Created by</Label>
+              <Input
+                value={`${promo.createdByEmail} · ${formatDate(promo.createdAt)}`}
+                disabled
+              />
+            </div>
+            {promo.deactivatedAt && (
+              <div className="space-y-2">
+                <Label>Deactivated</Label>
+                <Input
+                  value={`${formatDate(promo.deactivatedAt)}${
+                    promo.deactivatedByEmail
+                      ? ` by ${promo.deactivatedByEmail}`
+                      : ''
+                  }`}
+                  disabled
+                />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {pending > 0 && (
         <p className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
@@ -270,7 +313,9 @@ export default function PromoCodeDetail() {
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold text-slate-900">Redemptions</h3>
+          <h3 className="text-lg font-semibold text-slate-900">
+            Users who redeemed this promotion
+          </h3>
           <Select
             value={status}
             onValueChange={(v) => {
@@ -296,7 +341,6 @@ export default function PromoCodeDetail() {
             <TableHeader>
               <TableRow className="bg-muted">
                 <TableHead>User</TableHead>
-                <TableHead>Code</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="whitespace-nowrap">Redeemed on</TableHead>
                 <TableHead className="whitespace-nowrap">Premium until</TableHead>
@@ -343,9 +387,6 @@ export default function PromoCodeDetail() {
                           </span>
                         </button>
                       )}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm text-slate-700">
-                      {r.codeValue}
                     </TableCell>
                     <TableCell>
                       <RedemptionStatusBadge

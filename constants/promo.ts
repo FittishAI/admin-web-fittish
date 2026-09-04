@@ -76,6 +76,27 @@ export const REDEMPTION_STATUS_FILTERS: Array<{
   { value: 'FAILED', label: 'Failed' },
 ];
 
+/* ------------------------------- analytics -------------------------------- */
+
+export const ALL_FILTER = 'ALL';
+
+export const ANALYTICS_RANGE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+  { value: '365', label: 'Last 12 months' },
+  { value: 'all', label: 'All time' },
+];
+
+export const DEFAULT_ANALYTICS_RANGE = '90';
+
+/* --------------------------------- charts --------------------------------- */
+
+export const MAX_CHART_DAYS = 400;
+
+export const MAX_CHART_BARS = 12;
+
+export const MAX_CHART_LABEL_CHARS = 14;
+
 /* ---------------------------------- copy ---------------------------------- */
 
 export const PROMO_COPY = {
@@ -106,3 +127,5 @@ export const MAX_CUSTOM_REDEMPTIONS = 100_000;
 
 /** Mirrors the API's ^[A-Z0-9]{4,24}$ — no hyphens, because redemption strips them. */
 export const CUSTOM_CODE_PATTERN = /^[A-Z0-9]{4,24}$/;
+
+export const START_GRACE_MS = 5 * 60_000;

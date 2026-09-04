@@ -446,3 +446,52 @@ export interface PromotionRedemptionFilters {
   offset: number;
   limit: number;
 }
+
+/* --------------------------- promo overview ------------------------------- */
+
+export interface PromoOverviewRow {
+  id: number;
+  name: string;
+  type: PromotionType;
+  basisPlan: PromoBasisPlan;
+  status: PromotionStatus;
+  durationDays: number;
+  capacity: number;
+  redeemed: number;
+  startAt: string;
+  endAt: string;
+}
+
+export interface PromoOverview {
+  totals: {
+    promotions: number;
+    activePromotions: number;
+    codesGenerated: number;
+    codesRedeemed: number;
+    usersReached: number;
+    pendingGrants: number;
+    failedGrants: number;
+  };
+  daily: PromoDailyPoint[];
+  rangeStart: string;
+  rangeEnd: string;
+  promotions: PromoOverviewRow[];
+}
+
+export interface GlobalRedemptionRow extends PromotionRedemptionRow {
+  promotionId: number;
+  promotionName: string;
+}
+
+export interface GlobalRedemptionFilters {
+  search?: string;
+  promotionId?: number | null;
+  status?: PromoRedemptionStatus | 'ALL';
+  offset: number;
+  limit: number;
+}
+
+export interface GlobalRedemptionsPage {
+  items: GlobalRedemptionRow[];
+  total: number;
+}

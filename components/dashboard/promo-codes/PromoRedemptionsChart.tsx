@@ -13,40 +13,23 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatNumber, formatUtcDayLong, formatUtcDayShort } from '@/lib/format';
+import {
+  formatNumber,
+  formatUtcDayLong,
+  formatUtcDayShort,
+  utcDayOf,
+  utcDayRange,
+} from '@/lib/format';
 import {
   CHART_BLUE,
   CHART_CURSOR,
   CHART_GRID,
   CHART_TICK,
 } from '@/constants/colors';
+import { MAX_CHART_DAYS } from '@/constants/promo';
 import type { PromoDailyPoint } from '@/lib/types';
 
-const MAX_DAYS = 400;
-
-const DAY_MS = 86_400_000;
-
-
 export type PromoRedemptionPoint = PromoDailyPoint;
-
-
-export function utcDayOf(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
-}
-
-
-function utcDayRange(start: string, end: string): string[] {
-  const from = Date.parse(`${start}T00:00:00Z`);
-  const to = Date.parse(`${end}T00:00:00Z`);
-  if (Number.isNaN(from) || Number.isNaN(to) || to < from) return [];
-
-  const days: string[] = [];
-  for (let t = from; t <= to && days.length < MAX_DAYS; t += DAY_MS) {
-    days.push(new Date(t).toISOString().slice(0, 10));
-  }
-  return days;
-}
 
 
 export default function PromoRedemptionsChart({
@@ -69,7 +52,7 @@ export default function PromoRedemptionsChart({
     const endOfWindow = utcDayOf(windowEnd);
     const end = endOfWindow < today ? endOfWindow : today;
 
-    const days = utcDayRange(start, end);
+    const days = utcDayRange(start, end, MAX_CHART_DAYS);
     if (!days.length) {
       return [...points].sort((a, b) => a.date.localeCompare(b.date));
     }
@@ -79,20 +62,33 @@ export default function PromoRedemptionsChart({
 
   const tickInterval = Math.max(0, Math.floor(data.length / 6) - 1);
 
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+  const isEmpty = total === 0;
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Redemptions per day</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="h-56">
+        <div className="h-64">
           {loading ? (
             <Skeleton className="h-full w-full" />
+          ) : isEmpty ? (
+            <div className="flex h-full flex-col items-center justify-center text-center">
+              <p className="text-sm font-medium text-slate-700">
+                No redemptions yet
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                Once people start redeeming, this chart will show how many did
+                so on each day.
+              </p>
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={data}
-                margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+                margin={{ top: 8, right: 12, bottom: 4, left: 4 }}
               >
                 <CartesianGrid vertical={false} stroke={CHART_GRID} strokeWidth={1} />
                 <XAxis
@@ -102,18 +98,37 @@ export default function PromoRedemptionsChart({
                   tickLine={false}
                   axisLine={false}
                   tick={{ fill: CHART_TICK, fontSize: 11 }}
+                  height={46}
+                  label={{
+                    value: 'Date',
+                    position: 'insideBottom',
+                    offset: 4,
+                    fill: CHART_TICK,
+                    fontSize: 11,
+                  }}
                 />
                 <YAxis
                   allowDecimals={false}
                   tickLine={false}
                   axisLine={false}
                   tick={{ fill: CHART_TICK, fontSize: 11 }}
-                  width={40}
+                  width={68}
+                  label={{
+                    value: 'Users who redeemed',
+                    angle: -90,
+                    position: 'insideLeft',
+                    style: { textAnchor: 'middle' },
+                    fill: CHART_TICK,
+                    fontSize: 11,
+                  }}
                 />
                 <Tooltip
                   cursor={{ stroke: CHART_CURSOR, strokeWidth: 1 }}
                   labelFormatter={(d) => formatUtcDayLong(String(d))}
-                  formatter={(value) => [formatNumber(Number(value)), 'Redemptions']}
+                  formatter={(value) => [
+                    formatNumber(Number(value)),
+                    'Users who redeemed',
+                  ]}
                 />
                 <Area
                   type="monotone"
@@ -129,9 +144,6 @@ export default function PromoRedemptionsChart({
             </ResponsiveContainer>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Days are counted in UTC, so this chart reads the same for every admin.
-        </p>
       </CardContent>
     </Card>
   );

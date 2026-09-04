@@ -9,6 +9,8 @@
 /** Rendered in place of any value that is absent or unparseable. */
 export const EM_DASH = '—';
 
+const DAY_MS = 86_400_000;
+
 /* ---------------------------------- dates --------------------------------- */
 
 const DATE_ONLY: Intl.DateTimeFormatOptions = {
@@ -87,6 +89,42 @@ export function formatEntitlementExpiry(iso?: string | null): string {
 export const formatDays = (n: number): string =>
   `${formatNumber(n)} ${n === 1 ? 'day' : 'days'}`;
 
+export function formatDateTime(iso?: string | null): string {
+  if (!iso) return EM_DASH;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? EM_DASH
+    : d.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+}
+
+export function utcDayOf(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+}
+
+
+export function utcDayRange(
+  start: string,
+  end: string,
+  maxDays: number,
+): string[] {
+  const from = Date.parse(`${start}T00:00:00Z`);
+  const to = Date.parse(`${end}T00:00:00Z`);
+  if (Number.isNaN(from) || Number.isNaN(to) || to < from) return [];
+
+  const days: string[] = [];
+  for (let t = from; t <= to && days.length < maxDays; t += DAY_MS) {
+    days.push(new Date(t).toISOString().slice(0, 10));
+  }
+  return days;
+}
+
 /* ------------------------------ date & time inputs ------------------------ */
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -112,6 +150,11 @@ export function nowForTimeInput(): string {
   const d = new Date();
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
+
+/* --------------------------------- strings -------------------------------- */
+
+export const truncateLabel = (value: string, max: number): string =>
+  value.length > max ? `${value.slice(0, max - 1)}…` : value;
 
 /* --------------------------------- numbers -------------------------------- */
 

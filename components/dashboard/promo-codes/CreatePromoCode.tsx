@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCreatePromotion } from '@/hooks/admin/useCreatePromotion';
-import { downloadFile, filenameSlug } from '@/lib/csv';
 import {
   combineDateTime,
   localInputToIso,
@@ -24,6 +23,7 @@ import {
   MAX_CUSTOM_REDEMPTIONS,
   MAX_ONE_TIME_CODES,
   MAX_PROMO_DAYS,
+  START_GRACE_MS,
   PRODUCT_TYPE_LABELS,
   SELECTABLE_PRODUCT_TYPES,
 } from '@/constants/promo';
@@ -82,6 +82,9 @@ export default function CreatePromoCode() {
     codeCountNum >= 1 &&
     codeCountNum <= MAX_ONE_TIME_CODES;
 
+  const startNotPast =
+    !!startIso && new Date(startIso).getTime() >= Date.now() - START_GRACE_MS;
+
   const windowValid =
     !!startIso &&
     !!endIso &&
@@ -92,7 +95,12 @@ export default function CreatePromoCode() {
     type === 'CUSTOM' ? codeValid && maxRedemptionsValid : codeCountValid;
 
   const canSubmit =
-    nameValid && typeValid && durationValid && windowValid && !isPending;
+    nameValid &&
+    typeValid &&
+    durationValid &&
+    startNotPast &&
+    windowValid &&
+    !isPending;
 
   const payload = useMemo((): CreatePromotionPayload | null => {
     if (!startIso || !endIso) return null;
@@ -144,7 +152,7 @@ export default function CreatePromoCode() {
     createPromotion(
       { ...payload, requestId: requestIdRef.current.id },
       {
-        onSuccess: async (res) => {
+        onSuccess: (res) => {
           submittingRef.current = false;
 
           if (res.replayed) {
@@ -157,28 +165,14 @@ export default function CreatePromoCode() {
             toast.success('Success', {
               description:
                 res.type === 'ONE_TIME'
-                  ? `${res.name} created with ${res.codesCount} codes.`
+                  ? `${res.name} created with ${res.codesCount} codes. Use the ` +
+                    'download button to get the codes CSV.'
                   : `${res.name} created.`,
             });
           }
 
-          if (res.type === 'ONE_TIME' && !res.replayed) {
-            try {
-              await downloadFile(
-                `/admin/promotions/${res.id}/codes.csv`,
-                `${filenameSlug(res.name)}-codes.csv`
-              );
-            } catch {
-              toast.warning('Warning', {
-                description:
-                  'The promotion was created, but the codes CSV did not ' +
-                  'download. Use the download button on the promotion page.',
-              });
-            }
-          }
-
           requestIdRef.current = null;
-          router.push(`/dashboard/promo-codes/${res.id}`);
+          router.replace('/dashboard/promo-codes');
         },
         onError: (err: Error) => {
           submittingRef.current = false;
@@ -385,6 +379,7 @@ export default function CreatePromoCode() {
                   id="promo-start-date"
                   type="date"
                   value={startDate}
+                  min={todayForInput()}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="w-full sm:w-[190px]"
                 />
@@ -397,6 +392,11 @@ export default function CreatePromoCode() {
                   className="w-full sm:w-[140px]"
                 />
               </div>
+              {startIso && !startNotPast && (
+                <p className="text-xs text-red-600">
+                  The start date and time cannot be in the past.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -406,7 +406,7 @@ export default function CreatePromoCode() {
                   id="promo-end-date"
                   type="date"
                   value={endDate}
-                  min={startDate}
+                  min={startDate || todayForInput()}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="w-full sm:w-[190px]"
                 />
