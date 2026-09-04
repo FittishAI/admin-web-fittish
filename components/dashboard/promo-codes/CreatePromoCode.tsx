@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCreatePromotion } from '@/hooks/admin/useCreatePromotion';
 import {
   combineDateTime,
-  localInputToIso,
+  localInputToNaiveDateTime,
   nowForTimeInput,
   todayForInput,
 } from '@/lib/format';
@@ -57,8 +57,8 @@ export default function CreatePromoCode() {
   const startAt = combineDateTime(startDate, startTime);
   const endAt = combineDateTime(endDate, endTime);
 
-  const startIso = localInputToIso(startAt);
-  const endIso = localInputToIso(endAt);
+  const startLocal = localInputToNaiveDateTime(startAt);
+  const endLocal = localInputToNaiveDateTime(endAt);
 
   const nameValid = name.trim().length >= 3 && name.trim().length <= 100;
   const codeValid = CUSTOM_CODE_PATTERN.test(code.trim());
@@ -86,10 +86,10 @@ export default function CreatePromoCode() {
     !!startIso && new Date(startIso).getTime() >= Date.now() - START_GRACE_MS;
 
   const windowValid =
-    !!startIso &&
-    !!endIso &&
-    new Date(endIso).getTime() > new Date(startIso).getTime() &&
-    new Date(endIso).getTime() > Date.now();
+    !!startLocal &&
+    !!endLocal &&
+    new Date(endLocal).getTime() > new Date(startLocal).getTime() &&
+    new Date(endLocal).getTime() > Date.now();
 
   const typeValid =
     type === 'CUSTOM' ? codeValid && maxRedemptionsValid : codeCountValid;
@@ -103,15 +103,15 @@ export default function CreatePromoCode() {
     !isPending;
 
   const payload = useMemo((): CreatePromotionPayload | null => {
-    if (!startIso || !endIso) return null;
+    if (!startLocal || !endLocal) return null;
     return {
       name: name.trim(),
       type,
       durationDays: durationDaysNum,
       // The API calls this `basisPlan`; the form keeps the screen's wording.
       basisPlan: productType,
-      startAt: startIso,
-      endAt: endIso,
+      startAt: startLocal,
+      endAt: endLocal,
       ...(type === 'CUSTOM'
         ? { code: code.trim().toUpperCase(), maxRedemptions: maxRedemptionsNum }
         : { codeCount: codeCountNum }),
@@ -122,8 +122,8 @@ export default function CreatePromoCode() {
     type,
     durationDaysNum,
     productType,
-    startIso,
-    endIso,
+    startLocal,
+    endLocal,
     code,
     maxRedemptionsNum,
     codeCountNum,
@@ -419,7 +419,7 @@ export default function CreatePromoCode() {
                   className="w-full sm:w-[140px]"
                 />
               </div>
-              {endIso && startIso && !windowValid && (
+              {endLocal && startLocal && !windowValid && (
                 <p className="text-xs text-red-600">
                   The end date and time must be after the start, and in the
                   future.

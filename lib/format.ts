@@ -131,14 +131,12 @@ const pad2 = (n: number) => String(n).padStart(2, '0');
 
 
 export function combineDateTime(date: string, time: string): string {
-  return date && time ? `${date}T${time}` : '';
+  return date && time ? `${date}T${time}:00` : '';
 }
 
-
-export function localInputToIso(value: string): string | null {
+export function localInputToNaiveDateTime(value: string): string | null {
   if (!value) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  return Number.isNaN(new Date(value).getTime()) ? null : value;
 }
 
 export function todayForInput(): string {
