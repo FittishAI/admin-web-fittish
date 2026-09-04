@@ -9,6 +9,8 @@
 /** Rendered in place of any value that is absent or unparseable. */
 export const EM_DASH = '—';
 
+const DAY_MS = 86_400_000;
+
 /* ---------------------------------- dates --------------------------------- */
 
 const DATE_ONLY: Intl.DateTimeFormatOptions = {
@@ -65,6 +67,92 @@ export const formatUtcDayShort = (day: string): string =>
 /** "August 24, 2026" — for tooltips, where the full date is worth the space. */
 export const formatUtcDayLong = (day: string): string =>
   formatUtcDay(day, { month: 'long', day: 'numeric', year: 'numeric' });
+
+
+const NEVER_EXPIRES_YEAR = 9999;
+
+/**
+ * An expiry timestamp as a date — or the word "Lifetime".
+ *
+ * Rendering the sentinel with {@link formatDate} would put "Dec 31, 9999" on
+ * screen, which reads as a data bug rather than as a deliberate forever-grant.
+ */
+export function formatEntitlementExpiry(iso?: string | null): string {
+  if (!iso) return EM_DASH;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return EM_DASH;
+  if (d.getUTCFullYear() >= NEVER_EXPIRES_YEAR) return 'Lifetime';
+  return formatDate(iso);
+}
+
+/** A day count with its unit — "1 day", "30 days". */
+export const formatDays = (n: number): string =>
+  `${formatNumber(n)} ${n === 1 ? 'day' : 'days'}`;
+
+export function formatDateTime(iso?: string | null): string {
+  if (!iso) return EM_DASH;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? EM_DASH
+    : d.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+}
+
+export function utcDayOf(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+}
+
+
+export function utcDayRange(
+  start: string,
+  end: string,
+  maxDays: number,
+): string[] {
+  const from = Date.parse(`${start}T00:00:00Z`);
+  const to = Date.parse(`${end}T00:00:00Z`);
+  if (Number.isNaN(from) || Number.isNaN(to) || to < from) return [];
+
+  const days: string[] = [];
+  for (let t = from; t <= to && days.length < maxDays; t += DAY_MS) {
+    days.push(new Date(t).toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+/* ------------------------------ date & time inputs ------------------------ */
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+
+export function combineDateTime(date: string, time: string): string {
+  return date && time ? `${date}T${time}:00` : '';
+}
+
+export function localInputToNaiveDateTime(value: string): string | null {
+  if (!value) return null;
+  return Number.isNaN(new Date(value).getTime()) ? null : value;
+}
+
+export function todayForInput(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+export function nowForTimeInput(): string {
+  const d = new Date();
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/* --------------------------------- strings -------------------------------- */
+
+export const truncateLabel = (value: string, max: number): string =>
+  value.length > max ? `${value.slice(0, max - 1)}…` : value;
 
 /* --------------------------------- numbers -------------------------------- */
 

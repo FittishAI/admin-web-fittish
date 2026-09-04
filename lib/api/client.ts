@@ -47,13 +47,23 @@ async function requestNewTokens(): Promise<string | null> {
   }
 }
 
+function browserTimezone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
 function buildRequest(path: string, init: ApiRequestInit, token: string | null): Promise<Response> {
   const { json, headers, ...rest } = init;
+  const timezone = browserTimezone();
 
   return fetch(`${API_URL}${path}`, {
     ...rest,
     headers: {
       "Content-Type": "application/json",
+      ...(timezone ? { "x-timezone": timezone } : {}),
       ...(headers ?? {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },

@@ -320,3 +320,178 @@ export interface FreeTrialGrantFilters {
   offset: number;
   limit: number;
 }
+
+export type PromotionType = 'CUSTOM' | 'ONE_TIME';
+
+
+export type PromoBasisPlan = 'MONTHLY' | 'YEARLY';
+
+export type PromotionStatus = 'DEACTIVATED' | 'SCHEDULED' | 'LIVE' | 'FINISHED';
+
+export type PromoRedemptionStatus = 'PENDING' | 'GRANTED' | 'FAILED';
+
+export interface PromotionListItem {
+  id: number;
+  name: string;
+  type: PromotionType;
+  /** Days of premium granted on redemption. */
+  durationDays: number;
+  /** Quota tier applied for the length of the grant. */
+  basisPlan: PromoBasisPlan;
+  /** Full ISO instant with an explicit offset — never a bare calendar day. */
+  startAt: string;
+  endAt: string;
+  status: PromotionStatus;
+  isActive: boolean;
+  /** CUSTOM: the single shareable code. ONE_TIME: null — see `codesCount`. */
+  customCode: string | null;
+  codesCount: number;
+  /** Σ maxRedemptions across the promotion's codes. */
+  capacity: number;
+  /** Σ redeemedCount — the authoritative slot counter, not a COUNT of rows. */
+  redeemed: number;
+  grantedCount: number;
+  pendingCount: number;
+  failedCount: number;
+  createdByEmail: string;
+  createdAt: string;
+}
+
+export interface PromotionsPage {
+  items: PromotionListItem[];
+  total: number;
+}
+
+export interface PromotionFilters {
+  /** Matches promotion name, or an exact code. */
+  search?: string;
+  status?: PromotionStatus | 'ALL';
+  offset: number;
+  limit: number;
+}
+
+export interface PromotionDetail extends PromotionListItem {
+  deactivatedAt: string | null;
+  deactivatedByEmail: string | null;
+}
+
+export interface CreatePromotionPayload {
+  name: string;
+  type: PromotionType;
+  /** Days of premium granted on redemption. */
+  durationDays: number;
+  /** Quota tier applied for the length of the grant. */
+  basisPlan: PromoBasisPlan;
+  startAt: string;
+  endAt: string;
+  code?: string;
+  /** CUSTOM only. */
+  maxRedemptions?: number;
+  /** ONE_TIME only. */
+  codeCount?: number;
+  /** Idempotency key — the same value can never create twice. */
+  requestId: string;
+}
+
+export interface CreatePromotionResult {
+  id: number;
+  name: string;
+  type: PromotionType;
+  codesCount: number;
+  /** True when this requestId had already been applied; nothing was created again. */
+  replayed: boolean;
+}
+
+/** One UTC day bucket. `date` is a bare "YYYY-MM-DD" — see PromoRedemptionsChart. */
+export interface PromoDailyPoint {
+  date: string;
+  count: number;
+}
+
+/** Counts are flat on the response, not nested under a `totals` object. */
+export interface PromotionAnalytics {
+  granted: number;
+  pending: number;
+  failed: number;
+  capacity: number;
+  uniqueUsers: number;
+  timeseries: PromoDailyPoint[];
+}
+
+export interface PromotionRedemptionRow {
+  id: number;
+  userId: number;
+  /** Live join; falls back to the snapshot when the user has been deleted. */
+  userName: string | null;
+  userEmail: string;
+  userDeleted: boolean;
+  codeValue: string;
+  /** Days granted at the time of redemption — snapshot, not the current value. */
+  durationDaysAtRedemption: number;
+  status: PromoRedemptionStatus;
+  redeemedAt: string;
+  grantedAt: string | null;
+  /** Full ISO instant. Null while PENDING or FAILED — nothing was granted. */
+  entitlementExpiresAt: string | null;
+  rcError: string | null;
+}
+
+export interface PromotionRedemptionsPage {
+  items: PromotionRedemptionRow[];
+  total: number;
+}
+
+export interface PromotionRedemptionFilters {
+  status?: PromoRedemptionStatus | 'ALL';
+  offset: number;
+  limit: number;
+}
+
+/* --------------------------- promo overview ------------------------------- */
+
+export interface PromoOverviewRow {
+  id: number;
+  name: string;
+  type: PromotionType;
+  basisPlan: PromoBasisPlan;
+  status: PromotionStatus;
+  durationDays: number;
+  capacity: number;
+  redeemed: number;
+  startAt: string;
+  endAt: string;
+}
+
+export interface PromoOverview {
+  totals: {
+    promotions: number;
+    activePromotions: number;
+    codesGenerated: number;
+    codesRedeemed: number;
+    usersReached: number;
+    pendingGrants: number;
+    failedGrants: number;
+  };
+  daily: PromoDailyPoint[];
+  rangeStart: string;
+  rangeEnd: string;
+  promotions: PromoOverviewRow[];
+}
+
+export interface GlobalRedemptionRow extends PromotionRedemptionRow {
+  promotionId: number;
+  promotionName: string;
+}
+
+export interface GlobalRedemptionFilters {
+  search?: string;
+  promotionId?: number | null;
+  status?: PromoRedemptionStatus | 'ALL';
+  offset: number;
+  limit: number;
+}
+
+export interface GlobalRedemptionsPage {
+  items: GlobalRedemptionRow[];
+  total: number;
+}

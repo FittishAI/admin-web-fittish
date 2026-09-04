@@ -24,14 +24,18 @@ import { useGetDashboardStats } from '@/hooks/admin/useGetDashboardStats';
 import type { DashboardStats } from '@/lib/types';
 import StatTile from '@/components/dashboard/StatTile';
 import {
+  CHART_BLUE,
+  CHART_CURSOR,
+  CHART_GRID,
+  CHART_TICK,
+} from '@/constants/colors';
+import {
   formatDate,
   formatNumber,
   formatUtcDayLong,
   formatUtcDayShort,
 } from '@/lib/format';
 
-/** Brand blue from the Fittish logo — validated for chart use on light surface. */
-const CHART_BLUE = '#2483FB';
 
 /* ---------------------------------- chart --------------------------------- */
 
@@ -49,7 +53,7 @@ const SignupsChart = ({ data }: { data: DashboardStats['signupsByDay'] }) => (
           >
             <CartesianGrid
               vertical={false}
-              stroke="#e5e7eb"
+              stroke={CHART_GRID}
               strokeWidth={1}
             />
             <XAxis
@@ -58,17 +62,17 @@ const SignupsChart = ({ data }: { data: DashboardStats['signupsByDay'] }) => (
               interval={6}
               tickLine={false}
               axisLine={false}
-              tick={{ fill: '#6b7280', fontSize: 11 }}
+              tick={{ fill: CHART_TICK, fontSize: 11 }}
             />
             <YAxis
               allowDecimals={false}
               tickLine={false}
               axisLine={false}
-              tick={{ fill: '#6b7280', fontSize: 11 }}
+              tick={{ fill: CHART_TICK, fontSize: 11 }}
               width={40}
             />
             <Tooltip
-              cursor={{ stroke: '#9ca3af', strokeWidth: 1 }}
+              cursor={{ stroke: CHART_CURSOR, strokeWidth: 1 }}
               labelFormatter={(d) => formatUtcDayLong(String(d))}
               formatter={(value) => [formatNumber(Number(value)), 'Signups']}
             />

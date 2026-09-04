@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Home, List, Users, Coins, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Home, List, Users, Coins, AlertTriangle, CalendarClock, Ticket, BarChart3 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/lib/store/authSlice';
@@ -45,6 +45,8 @@ const mainNav = [
   { label: 'Questionnaires', href: '/dashboard/questionnaires', icon: List },
   { label: 'Users', href: '/dashboard/users', icon: Users },
   { label: 'Free Trials', href: '/dashboard/free-trials', icon: CalendarClock },
+  { label: 'Promo Codes', href: '/dashboard/promo-codes', icon: Ticket },
+  { label: 'Promo Analytics', href: '/dashboard/promo-analytics', icon: BarChart3 },
   { label: 'Token Usage', href: '/dashboard/token-usage', icon: Coins },
   { label: 'Plan Failures', href: '/dashboard/plan-generations', icon: AlertTriangle },
 ];

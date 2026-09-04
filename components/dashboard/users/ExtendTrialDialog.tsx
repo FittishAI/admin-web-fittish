@@ -16,25 +16,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { useExtendFreeTrial } from '@/hooks/admin/useExtendFreeTrial';
 import { formatDate } from '@/lib/format';
+import { DIGITS_ONLY, newRequestId } from '@/lib/utils';
 import { MAX_TRIAL_GRANT_USERS } from '@/lib/types';
 import type { AdminUser, ExtendTrialResult } from '@/lib/types';
 
 const DAY_MS = 86_400_000;
 
-const DIGITS_ONLY = /^\d*$/;
-
 const DEFAULT_DAYS = '30';
-
-function newRequestId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
 
 export default function ExtendTrialDialog({
   open,
