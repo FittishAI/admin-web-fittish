@@ -83,7 +83,8 @@ export default function CreatePromoCode() {
     codeCountNum <= MAX_ONE_TIME_CODES;
 
   const startNotPast =
-    !!startIso && new Date(startIso).getTime() >= Date.now() - START_GRACE_MS;
+    !!startLocal &&
+    new Date(startLocal).getTime() >= Date.now() - START_GRACE_MS;
 
   const windowValid =
     !!startLocal &&
@@ -392,7 +393,7 @@ export default function CreatePromoCode() {
                   className="w-full sm:w-[140px]"
                 />
               </div>
-              {startIso && !startNotPast && (
+              {startLocal && !startNotPast && (
                 <p className="text-xs text-red-600">
                   The start date and time cannot be in the past.
                 </p>
