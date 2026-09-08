@@ -72,6 +72,16 @@ export interface AdminUser {
   onboardingCompleted: boolean;
   walkthroughCompleted?: number;
   walkthroughTotal?: number;
+  /**
+   * What the user can actually do right now — PAID beats PROMO beats TRIAL,
+   * the same precedence the backend enforces. Read this, not planName, to
+   * answer "is this person on a promo": planName stays FREE for them, because
+   * that is the billing truth.
+   */
+  entitlement?: 'PAID' | 'PROMO' | 'TRIAL' | 'FREE';
+  /** When the active promo lapses. Null unless entitlement is PROMO. */
+  promoExpiresAt?: string | null;
+
   freeTrialEndsAt?: string | null;
   effectiveTrialEndsAt?: string;
   trialSource?: 'STORED' | 'FALLBACK';

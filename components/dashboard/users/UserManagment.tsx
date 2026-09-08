@@ -131,6 +131,44 @@ const TrialCell = ({ user }: { user: AdminUser }) => {
   );
 };
 
+const EntitlementCell = ({ user }: { user: AdminUser }) => {
+  const entitlement = user.entitlement;
+  if (!entitlement) return <span className="text-gray-400">—</span>;
+
+  if (entitlement === 'PAID') {
+    return (
+      <Badge className="bg-emerald-100 text-emerald-700">Paid</Badge>
+    );
+  }
+
+  if (entitlement === 'PROMO') {
+    return (
+      <div className="flex flex-col gap-0.5 whitespace-nowrap">
+        <Badge className="bg-violet-100 text-violet-700 w-fit">Promo</Badge>
+        {user.promoExpiresAt && (
+          <span className="text-[11px] text-muted-foreground">
+            until {formatDate(user.promoExpiresAt)}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  if (entitlement === 'TRIAL') {
+    const days = user.trialDaysRemaining ?? 0;
+    return (
+      <div className="flex flex-col gap-0.5 whitespace-nowrap">
+        <Badge className="bg-sky-100 text-sky-700 w-fit">Trial</Badge>
+        <span className="text-[11px] text-muted-foreground">
+          {days} day{days === 1 ? '' : 's'} left
+        </span>
+      </div>
+    );
+  }
+
+  return <Badge className="bg-gray-100 text-gray-600">Free</Badge>;
+};
+
 const isGrantable = (user: AdminUser) =>
   (user.planName ?? 'FREE') === 'FREE' && !user.isDeleted;
 
@@ -313,6 +351,20 @@ export default function UserManagment() {
                 Last Session
               </TableHead>
               <TableHead
+                rowSpan={2}
+                className="align-middle whitespace-nowrap border-l"
+                title="The plan this account is billed on. Stays FREE for a trial or promo — neither is a subscription."
+              >
+                Subscription Plan
+              </TableHead>
+              <TableHead
+                rowSpan={2}
+                className="align-middle whitespace-nowrap"
+                title="What the user can actually do right now. A promo keeps the subscription plan on FREE, so this is the only column that reveals it."
+              >
+                Entitlement
+              </TableHead>
+              <TableHead
                 colSpan={2}
                 className="text-center border-l border-orange-200 bg-orange-50/60 text-orange-800 font-semibold"
               >
@@ -322,7 +374,7 @@ export default function UserManagment() {
                 </div>
               </TableHead>
               <TableHead
-                colSpan={3}
+                colSpan={2}
                 className="text-center border-l border-blue-200 bg-blue-50/60 text-blue-800 font-semibold"
               >
                 Plans
@@ -339,8 +391,7 @@ export default function UserManagment() {
             <TableRow className="bg-muted">
               <TableHead className="text-xs text-muted-foreground border-l border-orange-200">Current</TableHead>
               <TableHead className="text-xs text-muted-foreground">Longest</TableHead>
-              <TableHead className="text-xs text-muted-foreground border-l border-blue-200">Plan</TableHead>
-              <TableHead className="text-xs text-muted-foreground">
+              <TableHead className="text-xs text-muted-foreground border-l border-blue-200">
                 <div className="flex items-center gap-1"><Dumbbell className="w-3 h-3" />Workout</div>
               </TableHead>
               <TableHead className="text-xs text-muted-foreground">
@@ -358,7 +409,7 @@ export default function UserManagment() {
             {isLoading ? (
               [...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(17)].map((_, j) => (
+                  {[...Array(18)].map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -445,6 +496,12 @@ export default function UserManagment() {
                   <TableCell className="whitespace-nowrap text-sm text-slate-600">
                     {formatDate(user.lastLoginAt)}
                   </TableCell>
+                  <TableCell className="border-l">
+                    {getPlanBadge(user.planName)}
+                  </TableCell>
+                  <TableCell>
+                    <EntitlementCell user={user} />
+                  </TableCell>
                   {/* Streak group */}
                   <TableCell className="border-l border-orange-100">
                     <span className={`inline-flex items-center gap-1 font-medium ${user.currentStreak > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
@@ -458,9 +515,8 @@ export default function UserManagment() {
                       {user.longestStreak}
                     </span>
                   </TableCell>
-                  {/* Plans group */}
-                  <TableCell className="border-l border-blue-100">{getPlanBadge(user.planName)}</TableCell>
-                  <TableCell>
+                  {/* Plans group — quota only */}
+                  <TableCell className="border-l border-blue-100">
                     <QuotaCell
                       used={user.workoutPlanUsage}
                       limit={user.workoutPlanLimit}
@@ -566,7 +622,7 @@ export default function UserManagment() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={18}
+                  colSpan={19}
                   className="text-center text-muted-foreground"
                 >
                   No users found.
