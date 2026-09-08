@@ -1,4 +1,10 @@
 
+import {
+  CHART_BLUE,
+  CHART_GREEN,
+  CHART_RED,
+  CHART_SLATE,
+} from '@/constants/colors';
 import type {
   PromoBasisPlan,
   PromoRedemptionStatus,
@@ -51,6 +57,13 @@ export const REDEMPTION_STATUS_STYLES: Record<PromoRedemptionStatus, string> = {
 
 export const UNKNOWN_STATUS_STYLE = 'bg-gray-200 text-gray-600';
 
+export const PROMOTION_STATUS_CHART_FILLS: Record<PromotionStatus, string> = {
+  LIVE: CHART_GREEN,
+  SCHEDULED: CHART_BLUE,
+  FINISHED: CHART_SLATE,
+  DEACTIVATED: CHART_RED,
+};
+
 /* ------------------------------ filter options ---------------------------- */
 
 /** Options for the promotions list status filter. `ALL` clears it. */
@@ -93,9 +106,9 @@ export const DEFAULT_ANALYTICS_RANGE = '90';
 
 export const MAX_CHART_DAYS = 400;
 
-export const MAX_CHART_BARS = 12;
+export const CHART_VISIBLE_BARS = 20;
 
-export const MAX_CHART_LABEL_CHARS = 14;
+export const MAX_CHART_LABEL_CHARS = 12;
 
 /* ---------------------------------- copy ---------------------------------- */
 

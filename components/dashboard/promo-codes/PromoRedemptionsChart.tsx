@@ -13,6 +13,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { niceIntegerTicks } from '@/lib/chart';
 import {
   formatNumber,
   formatUtcDayLong,
@@ -63,6 +64,10 @@ export default function PromoRedemptionsChart({
   const tickInterval = Math.max(0, Math.floor(data.length / 6) - 1);
 
   const total = data.reduce((sum, d) => sum + d.count, 0);
+
+  const axis = niceIntegerTicks(
+    data.reduce((m, d) => Math.max(m, d.count), 0),
+  );
   const isEmpty = total === 0;
 
   return (
@@ -109,6 +114,8 @@ export default function PromoRedemptionsChart({
                 />
                 <YAxis
                   allowDecimals={false}
+                  domain={[0, axis.max]}
+                  ticks={axis.ticks}
                   tickLine={false}
                   axisLine={false}
                   tick={{ fill: CHART_TICK, fontSize: 11 }}
