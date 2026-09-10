@@ -20,6 +20,17 @@ export const PROMOTION_TYPE_LABELS: Record<PromotionType, string> = {
 };
 
 
+export const CODE_KIND_LABELS: Record<PromotionType, string> = {
+  CUSTOM: 'Custom code',
+  ONE_TIME: 'One-time code',
+};
+
+export const CODE_AVAILABILITY_FILTERS = [
+  { value: 'AVAILABLE', label: 'Available' },
+  { value: 'USED', label: 'Used' },
+  { value: 'ALL', label: 'All codes' },
+] as const;
+
 export const PRODUCT_TYPE_LABELS: Record<PromoBasisPlan, string> = {
   MONTHLY: 'Monthly',
   YEARLY: 'Yearly',

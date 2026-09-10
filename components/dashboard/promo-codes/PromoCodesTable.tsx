@@ -1,9 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Download, Plus, Search, Ticket } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Plus,
+  Search,
+  Ticket,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +32,8 @@ import {
 } from '@/components/ui/table';
 import TablePagination from '@/components/dashboard/TablePagination';
 import { PromotionStatusBadge } from '@/components/dashboard/promo-codes/PromoBadges';
+import PromoCodeChip from '@/components/dashboard/promo-codes/PromoCodeChip';
+import PromotionCodesPanel from '@/components/dashboard/promo-codes/PromotionCodesPanel';
 import {
   PRODUCT_TYPE_LABELS,
   PROMOTION_STATUS_FILTERS,
@@ -78,6 +87,9 @@ export default function PromoCodesTable() {
   } = useTableControls();
   const [status, setStatus] = useState<PromotionStatus | 'ALL'>('ALL');
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  // One at a time. Two open panels would put 200 codes on screen and bury the
+  // table they belong to.
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const filters = useMemo(
     () => ({ search, status, offset, limit: pageSize }),
@@ -85,6 +97,10 @@ export default function PromoCodesTable() {
   );
 
   const { data, isLoading, isError, error } = useGetPromotions(filters);
+
+  // Paginating or filtering replaces the rows, so an id held open here would
+  // either vanish or, worse, reopen against a different promotion.
+  useEffect(() => setExpandedId(null), [offset, search, status]);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -167,7 +183,7 @@ export default function PromoCodesTable() {
               <TableHead className="whitespace-nowrap">Start date</TableHead>
               <TableHead className="whitespace-nowrap">End date</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-12" />
+              <TableHead className="whitespace-nowrap">Code</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -194,8 +210,8 @@ export default function PromoCodesTable() {
               </TableRow>
             ) : items.length > 0 ? (
               items.map((promo) => (
+                <Fragment key={promo.id}>
                 <TableRow
-                  key={promo.id}
                   className="cursor-pointer hover:bg-blue-50 transition-colors"
                   onClick={() =>
                     router.push(`/dashboard/promo-codes/${promo.id}`)
@@ -234,18 +250,59 @@ export default function PromoCodesTable() {
                   </TableCell>
                   {/* stopPropagation: the whole row navigates on click. */}
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Download codes for ${promo.name}`}
-                      title="Download codes CSV"
-                      disabled={downloadingId === promo.id}
-                      onClick={() => handleDownload(promo)}
-                    >
-                      <Download className="w-4 h-4 text-muted-foreground" />
-                    </Button>
+                    {promo.customCode ? (
+                      <PromoCodeChip code={promo.customCode} />
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 font-normal"
+                          aria-expanded={expandedId === promo.id}
+                          aria-label={`${
+                            expandedId === promo.id ? 'Hide' : 'Show'
+                          } codes for ${promo.name}`}
+                          onClick={() =>
+                            setExpandedId((cur) =>
+                              cur === promo.id ? null : promo.id
+                            )
+                          }
+                        >
+                          {expandedId === promo.id ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                          <span className="whitespace-nowrap text-xs text-muted-foreground">
+                            {formatNumber(promo.codesCount)} codes
+                          </span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Download codes for ${promo.name}`}
+                          title="Download codes CSV"
+                          disabled={downloadingId === promo.id}
+                          onClick={() => handleDownload(promo)}
+                        >
+                          <Download className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
+                {expandedId === promo.id && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={COLUMN_COUNT} className="bg-slate-50 p-3">
+                      <PromotionCodesPanel
+                        promotionId={promo.id}
+                        promotionName={promo.name}
+                        codesCount={promo.codesCount}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+                </Fragment>
               ))
             ) : (
               <TableRow>

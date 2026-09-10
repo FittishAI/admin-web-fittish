@@ -428,6 +428,28 @@ export interface PromotionAnalytics {
   timeseries: PromoDailyPoint[];
 }
 
+export type PromoCodeAvailability = 'AVAILABLE' | 'USED';
+export type PromoCodeAvailabilityFilter = PromoCodeAvailability | 'ALL';
+
+export interface PromotionCodeListRow {
+  code: string;
+  maxRedemptions: number;
+  redeemedCount: number;
+  availability: PromoCodeAvailability;
+}
+
+export interface PromotionCodesPage {
+  items: PromotionCodeListRow[];
+  total: number;
+  availableTotal: number;
+}
+
+export interface PromotionCodeFilters {
+  availability: PromoCodeAvailabilityFilter;
+  offset: number;
+  limit: number;
+}
+
 export interface PromotionRedemptionRow {
   id: number;
   userId: number;

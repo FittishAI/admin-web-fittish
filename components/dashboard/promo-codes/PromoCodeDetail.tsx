@@ -40,11 +40,13 @@ import {
 } from '@/components/ui/table';
 import TablePagination from '@/components/dashboard/TablePagination';
 import PromoRedemptionsChart from '@/components/dashboard/promo-codes/PromoRedemptionsChart';
+import PromoCodeChip from '@/components/dashboard/promo-codes/PromoCodeChip';
 import {
   PromotionStatusBadge,
   RedemptionStatusBadge,
 } from '@/components/dashboard/promo-codes/PromoBadges';
 import {
+  CODE_KIND_LABELS,
   PRODUCT_TYPE_LABELS,
   PROMOTION_TYPE_LABELS,
   REDEMPTION_STATUS_FILTERS,
@@ -64,7 +66,7 @@ import {
 } from '@/lib/format';
 import type { PromoRedemptionStatus } from '@/lib/types';
 
-const COLUMN_COUNT = 5;
+const COLUMN_COUNT = 6;
 
 export default function PromoCodeDetail() {
   const router = useRouter();
@@ -234,6 +236,17 @@ export default function PromoCodeDetail() {
               />
             </div>
             <div className="space-y-2">
+              <Label>Promo code</Label>
+              {promo.customCode ? (
+                <PromoCodeChip code={promo.customCode} boxed />
+              ) : (
+                <Input
+                  value={`${formatNumber(promo.codesCount)} unique codes — use Download codes CSV`}
+                  disabled
+                />
+              )}
+            </div>
+            <div className="space-y-2">
               <Label>How much premium they get</Label>
               <Input value={formatDays(promo.durationDays)} disabled />
             </div>
@@ -341,6 +354,7 @@ export default function PromoCodeDetail() {
             <TableHeader>
               <TableRow className="bg-muted">
                 <TableHead>User</TableHead>
+                <TableHead>Code</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="whitespace-nowrap">Redeemed on</TableHead>
                 <TableHead className="whitespace-nowrap">Premium until</TableHead>
@@ -387,6 +401,12 @@ export default function PromoCodeDetail() {
                           </span>
                         </button>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <PromoCodeChip code={r.codeValue} />
+                      <span className="block text-xs text-muted-foreground">
+                        {CODE_KIND_LABELS[promo.type] ?? promo.type}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <RedemptionStatusBadge
